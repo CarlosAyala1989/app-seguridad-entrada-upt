@@ -20,7 +20,7 @@ El equipo está integrado por tres personas y ejecutará seis sprints más un pe
 
 ## Decisión
 
-Se adopta **MVVM + repositorio con capa de dominio ligera**, organizada por funcionalidad en Flutter. Se crean casos de uso únicamente cuando existe lógica de negocio real: comparación de identidad, validación de geocerca, generación de credenciales, validación anti-replay y aplicación de reglas por rol/horario.
+Se adopta **MVVM + repositorio con capa de dominio ligera**, organizada por funcionalidad en Flutter. Se crean casos de uso únicamente cuando existe lógica de negocio real: validación de los datos mínimos del perfil, comparación de identidad, validación de geocerca, generación de credenciales, validación anti-replay y aplicación de reglas por rol/horario.
 
 El límite del sistema se conserva de forma obligatoria:
 

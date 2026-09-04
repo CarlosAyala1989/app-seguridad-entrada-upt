@@ -18,4 +18,13 @@ final class PerfilDigital {
   final String estadoVerificacion;
   final String estadoAcceso;
   final String? fotoUrl;
+
+  bool get tieneDatosMinimos =>
+      nombreCompleto.trim().isNotEmpty &&
+      codigoInstitucional.trim().isNotEmpty &&
+      correoInstitucional.trim().isNotEmpty &&
+      rol.trim().isNotEmpty &&
+      escuela.trim().isNotEmpty &&
+      estadoVerificacion.trim().isNotEmpty &&
+      estadoAcceso.trim().isNotEmpty;
 }

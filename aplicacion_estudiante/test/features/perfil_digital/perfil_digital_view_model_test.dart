@@ -77,6 +77,36 @@ void main() {
 
     await viewModel.dispose();
   });
+
+  test('emite Error cuando el perfil no cumple los datos mínimos', () async {
+    final viewModel = PerfilDigitalViewModel(
+      obtenerPerfil: const ObtenerPerfilDigital(
+        _FakePerfilRepository(
+          result: PerfilDigital(
+            nombreCompleto: '',
+            codigoInstitucional: '2022000000',
+            correoInstitucional: '2022000000@virtual.upt.pe',
+            rol: 'STUDENT',
+            escuela: 'Ingeniería de Sistemas',
+            estadoVerificacion: 'VERIFIED',
+            estadoAcceso: 'ACTIVE',
+          ),
+        ),
+      ),
+    );
+    final emittedFuture = viewModel.states.take(2).toList();
+
+    await viewModel.cargar();
+    final emitted = await emittedFuture;
+
+    expect(emitted.last, isA<PerfilDigitalError>());
+    expect(
+      (emitted.last as PerfilDigitalError).message,
+      'La respuesta recibida no tiene el formato esperado.',
+    );
+
+    await viewModel.dispose();
+  });
 }
 
 final class _FakePerfilRepository implements PerfilDigitalRepository {

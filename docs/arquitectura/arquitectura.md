@@ -17,7 +17,8 @@ Flutter no conoce credenciales de MySQL ni la automatización de intranet. Las d
 ```mermaid
 flowchart TD
     V["Vista"] --> VM["ViewModel"]
-    VM --> R["Interfaz de repositorio · dominio"]
+    VM --> UC["Caso de uso · validar perfil mínimo"]
+    UC --> R["Interfaz de repositorio · dominio"]
     RI["Repositorio · datos"] --> R
     RI --> DS["Fuente remota"]
     DS --> API["API Node.js"]
@@ -34,15 +35,18 @@ La capa de dominio no importa datos ni presentación. El DTO y la entidad son ti
 sequenceDiagram
     participant UI as Vista Flutter
     participant VM as ViewModel
+    participant UC as Caso de uso
     participant RP as Repositorio
     participant API as Node.js
     UI->>VM: cargar()
     VM-->>UI: Loading
-    VM->>RP: obtenerPerfilActual()
+    VM->>UC: ejecutar()
+    UC->>RP: obtenerPerfilActual()
     RP->>API: GET /api/v1/users/me/profile
     alt perfil disponible
         API-->>RP: 200 + DTO mínimo
-        RP-->>VM: PerfilDigital
+        RP-->>UC: PerfilDigital
+        UC-->>VM: PerfilDigital válido
         VM-->>UI: Data
     else sin perfil
         API-->>RP: 204
