@@ -22,7 +22,9 @@ void main(List<String> arguments) {
   for (final line in report.readAsLinesSync()) {
     if (line.startsWith('SF:')) {
       final normalized = line.substring(3).replaceAll('\\', '/');
-      inDomainFile = normalized.contains('/lib/features/') &&
+      final isFeatureSource = normalized.startsWith('lib/features/') ||
+          normalized.contains('/lib/features/');
+      inDomainFile = isFeatureSource &&
           normalized.contains('/domain/');
     } else if (inDomainFile && line.startsWith('DA:')) {
       final parts = line.substring(3).split(',');
