@@ -1,4 +1,5 @@
 import 'package:aplicacion_estudiante/features/perfil_digital/domain/repositories/perfil_digital_repository.dart';
+import 'package:aplicacion_estudiante/features/perfil_digital/domain/usecases/obtener_perfil_digital.dart';
 import 'package:aplicacion_estudiante/features/perfil_digital/presentation/viewmodels/perfil_digital_view_model.dart';
 import 'package:aplicacion_estudiante/features/perfil_digital/presentation/views/perfil_digital_page.dart';
 import 'package:aplicacion_estudiante/main.dart';
@@ -7,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('muestra el estado vacío y una acción sugerida', (tester) async {
     final viewModel = PerfilDigitalViewModel(
-      repository: const _EmptyPerfilRepository(),
+      obtenerPerfil: const ObtenerPerfilDigital(_EmptyPerfilRepository()),
     );
 
     await tester.pumpWidget(

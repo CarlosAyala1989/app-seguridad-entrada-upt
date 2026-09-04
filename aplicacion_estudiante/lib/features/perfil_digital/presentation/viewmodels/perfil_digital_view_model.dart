@@ -2,14 +2,14 @@ import 'dart:async';
 
 import '../../../../core/error/failure.dart';
 import '../../../../shared/l10n/app_strings.dart';
-import '../../domain/repositories/perfil_digital_repository.dart';
+import '../../domain/usecases/obtener_perfil_digital.dart';
 import '../states/perfil_digital_state.dart';
 
 final class PerfilDigitalViewModel {
-  PerfilDigitalViewModel({required PerfilDigitalRepository repository})
-      : _repository = repository;
+  PerfilDigitalViewModel({required ObtenerPerfilDigital obtenerPerfil})
+      : _obtenerPerfil = obtenerPerfil;
 
-  final PerfilDigitalRepository _repository;
+  final ObtenerPerfilDigital _obtenerPerfil;
   final StreamController<PerfilDigitalState> _states =
       StreamController<PerfilDigitalState>.broadcast();
 
@@ -20,7 +20,7 @@ final class PerfilDigitalViewModel {
   Future<void> cargar() async {
     _emit(const PerfilDigitalLoading());
     try {
-      final perfil = await _repository.obtenerPerfilActual();
+      final perfil = await _obtenerPerfil();
       _emit(
         perfil == null
             ? const PerfilDigitalEmpty()

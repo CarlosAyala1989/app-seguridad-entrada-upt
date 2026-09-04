@@ -1,6 +1,7 @@
 import 'package:aplicacion_estudiante/core/error/failure.dart';
 import 'package:aplicacion_estudiante/features/perfil_digital/domain/entities/perfil_digital.dart';
 import 'package:aplicacion_estudiante/features/perfil_digital/domain/repositories/perfil_digital_repository.dart';
+import 'package:aplicacion_estudiante/features/perfil_digital/domain/usecases/obtener_perfil_digital.dart';
 import 'package:aplicacion_estudiante/features/perfil_digital/presentation/states/perfil_digital_state.dart';
 import 'package:aplicacion_estudiante/features/perfil_digital/presentation/viewmodels/perfil_digital_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +19,9 @@ void main() {
 
   test('emite Loading y luego Data cuando el repositorio responde', () async {
     final viewModel = PerfilDigitalViewModel(
-      repository: _FakePerfilRepository(result: perfil),
+      obtenerPerfil: ObtenerPerfilDigital(
+        _FakePerfilRepository(result: perfil),
+      ),
     );
     final emittedFuture = viewModel.states.take(2).toList();
 
@@ -36,7 +39,9 @@ void main() {
 
   test('emite Empty cuando el repositorio no encuentra perfil', () async {
     final viewModel = PerfilDigitalViewModel(
-      repository: const _FakePerfilRepository(result: null),
+      obtenerPerfil: const ObtenerPerfilDigital(
+        _FakePerfilRepository(result: null),
+      ),
     );
     final emittedFuture = viewModel.states.take(2).toList();
 
@@ -52,8 +57,10 @@ void main() {
 
   test('emite Error con reintento cuando el repositorio falla', () async {
     final viewModel = PerfilDigitalViewModel(
-      repository: const _FakePerfilRepository(
-        failure: NetworkFailure('Sin conexión de prueba.'),
+      obtenerPerfil: const ObtenerPerfilDigital(
+        _FakePerfilRepository(
+          failure: NetworkFailure('Sin conexión de prueba.'),
+        ),
       ),
     );
     final emittedFuture = viewModel.states.take(2).toList();
