@@ -1,0 +1,24 @@
+id | valor | riesgo | puntos | indice
+SP-01 | 5 | 5 | 2 | 5.0
+US-01 | 5 | 5 | 3 | 5.0
+US-05 | 5 | 5 | 5 | 5.0
+US-08 | 5 | 5 | 5 | 5.0
+US-10 | 5 | 5 | 5 | 5.0
+US-04 | 5 | 4 | 5 | 4.6
+US-07 | 5 | 4 | 3 | 4.6
+US-06 | 5 | 4 | 3 | 4.6
+US-09 | 5 | 4 | 3 | 4.6
+US-17 | 5 | 4 | 5 | 4.6
+US-18 | 5 | 4 | 5 | 4.6
+US-21 | 5 | 4 | 5 | 4.6
+TD-03 | 4 | 5 | 3 | 4.4
+SP-02 | 4 | 5 | 2 | 4.4
+US-02 | 4 | 4 | 3 | 4.0
+
+Elementos en el backlog: 30
+Puntos totales estimados: 111
+Historias sin estimar: 0
+Historias de 13 puntos o más: 0
+Elementos que tratan datos personales: 28
+
+Salida generada ejecutando `scripts/priorizar_backlog.py` sobre `docs/sprints/PRODUCT_BACKLOG.csv`.
