@@ -19,7 +19,7 @@ jobs:
         run: docker run --rm -v "$PWD:/src" aquasec/trivy:0.66.0 fs --scanners secret --exit-code 1 /src
 
   backend:
-    name: Node.js · análisis y pruebas
+    name: Node.js · análisis, pruebas y arranque
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,6 +36,25 @@ jobs:
         run: npm run lint
       - name: DoD-3 · Pruebas unitarias
         run: npm test
+      - name: DoD-1 · Arranque del backend y health check
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          PROFILE_PROVIDER: memory
+          PROFILE_SCENARIO: success
+          DEMO_SESSION_TOKEN: ci-session-token
+        run: |
+          node server.js > /tmp/ingresoupt-backend.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for intento in {1..10}; do
+            if curl --fail --silent http://127.0.0.1:3000/health | grep -q '"status":"ok"'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ingresoupt-backend.log
+          exit 1
 
   flutter-android:
     name: Flutter · análisis, pruebas, cobertura y Android
