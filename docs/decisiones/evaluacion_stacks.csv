@@ -1,0 +1,9 @@
+Criterio,Peso,Flutter,React Native,Kotlin Multiplatform,Nativo,Evidencia de la calificación
+Competencia actual del equipo,25,5,2,1,2,"Los tres integrantes ya trabajan con Flutter/Dart en el repositorio; no existe una base previa del equipo en React Native, KMP o Swift. Evidencia: aplicacion_estudiante/ y encuesta interna del 04/09/2026."
+Soporte de las capacidades requeridas,20,5,5,4,5,"Se comprobaron rutas documentadas para cámara/QR, ubicación y almacenamiento seguro. Flutter: https://pub.dev/packages/camera; React Native: https://docs.expo.dev/versions/latest/sdk/camera/; KMP: https://kotlinlang.org/docs/multiplatform.html; Android nativo: https://developer.android.com/media/camera/camerax"
+Madurez del ecosistema para el dominio,15,5,5,3,5,"Flutter y React Native/Expo disponen de paquetes mantenidos para cámara; Android/iOS poseen API oficiales. KMP requiere mayor cantidad de adaptadores específicos de plataforma para las capacidades del MVP."
+Rendimiento requerido,10,4,4,5,5,"El MVP procesa formularios, GPS, QR y respuestas REST; no exige procesamiento intensivo de video. El rendimiento de ambos finalistas cubre el escenario medido."
+Viabilidad sin macOS,10,5,5,4,3,"Flutter y React Native permiten desarrollar y probar Android desde Windows/Linux; iOS exige macOS únicamente para compilación/firma. KMP y nativo incrementan el trabajo específico de plataforma."
+Curva de aprendizaje,10,5,2,1,2,"Flutter ya forma parte del repositorio y de la competencia práctica del equipo; las otras alternativas exigen incorporar framework o lenguajes adicionales durante los primeros sprints."
+Mantenibilidad post-curso,10,5,3,2,2,"Flutter conserva una base de código móvil y coincide con la distribución acordada del equipo. KMP y nativo demandan conocimiento separado de Android/iOS."
+PUNTAJE_PONDERADO,100,4.90,3.65,2.70,3.45,"Escala de 1 a 5. Resultado = suma(peso × puntuación) / 100. Finalistas: Flutter y React Native."
