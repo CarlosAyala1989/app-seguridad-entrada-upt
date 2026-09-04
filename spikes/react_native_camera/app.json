@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "React Native Camera Smoke",
+    "slug": "react-native-camera-smoke",
+    "version": "1.0.0",
+    "platforms": ["android", "ios", "web"],
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Se requiere la cámara para validar credenciales QR."
+        }
+      ]
+    ]
+  }
+}

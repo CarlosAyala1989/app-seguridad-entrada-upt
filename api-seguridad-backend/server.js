@@ -1,26 +1,13 @@
+'use strict';
+
 require('dotenv').config();
 
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
+const { buildApp } = require('./src/app');
+const { readEnvironment } = require('./src/config/environment');
 
-const app = express();
-const port = Number(process.env.PORT) || 3000;
+const environment = readEnvironment();
+const app = buildApp({ environment });
 
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-
-app.get('/health', (_request, response) => {
-  response.status(200).json({ status: 'ok' });
-});
-
-app.use((_request, response) => {
-  response.status(404).json({ message: 'Route not found' });
-});
-
-app.listen(port, () => {
-  console.log(`API listening on port ${port}`);
+app.listen(environment.port, () => {
+  console.log(`API de IngresoUPT disponible en el puerto ${environment.port}`);
 });

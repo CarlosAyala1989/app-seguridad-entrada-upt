@@ -1,0 +1,127 @@
+name: CI · Definition of Done
+
+on:
+  push:
+    branches: [main, develop, taller-02]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: DoD-6 · Sin secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Escanear secretos versionados
+        run: docker run --rm -v "$PWD:/src" aquasec/trivy:0.66.0 fs --scanners secret --exit-code 1 /src
+
+  backend:
+    name: Node.js · análisis, pruebas y arranque
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api-seguridad-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api-seguridad-backend/package-lock.json
+      - run: npm ci
+      - name: DoD-2 · Análisis estático
+        run: npm run lint
+      - name: DoD-3 · Pruebas unitarias
+        run: npm test
+      - name: DoD-1 · Arranque del backend y health check
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          PROFILE_PROVIDER: memory
+          PROFILE_SCENARIO: success
+          DEMO_SESSION_TOKEN: ci-session-token
+        run: |
+          node server.js > /tmp/ingresoupt-backend.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for intento in {1..10}; do
+            if curl --fail --silent http://127.0.0.1:3000/health | grep -q '"status":"ok"'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/ingresoupt-backend.log
+          exit 1
+
+  flutter-android:
+    name: Flutter · análisis, pruebas, cobertura y Android
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aplicacion_estudiante
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: DoD-2 · Analizador estático
+        run: flutter analyze
+      - name: DoD-3 · Pruebas sin emulador
+        run: flutter test --coverage
+      - name: DoD-4 · Cobertura de dominio ≥ 70 %
+        run: dart run scripts/check_domain_coverage.dart coverage/lcov.info 70
+      - name: DoD-1 · Compilación Android
+        run: flutter build apk --debug --dart-define=API_BASE_URL=https://api.invalid.upt.pe
+
+  flutter-ios:
+    name: DoD-1 · Compilación iOS
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: aplicacion_estudiante
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --simulator
+
+  smoke-flutter-camera:
+    name: Prueba de humo · Flutter cámara
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spikes/flutter_camera
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter create --platforms=android --org pe.edu.upt .
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter build apk --debug
+
+  smoke-react-native-camera:
+    name: Prueba de humo · React Native cámara
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spikes/react_native_camera
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: spikes/react_native_camera/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run export:web
