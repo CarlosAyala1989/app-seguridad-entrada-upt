@@ -54,10 +54,10 @@ class _StateBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      PerfilDigitalLoading() => const Center(
+      PerfilDigitalLoading() => Center(
           child: Semantics(
             label: AppStrings.loadingProfile,
-            child: CircularProgressIndicator(),
+            child: const CircularProgressIndicator(),
           ),
         ),
       PerfilDigitalData(:final perfil) => _ProfileCard(perfil: perfil),
