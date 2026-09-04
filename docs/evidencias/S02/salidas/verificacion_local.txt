@@ -1,0 +1,21 @@
+VERIFICACIÓN LOCAL DEL ENTORNO DE TRABAJO
+Fecha UTC: 2026-09-04
+
+- Comando: npm ci --ignore-scripts
+  Resultado: 104 paquetes instalados correctamente.
+
+- Comando: npm run lint
+  Resultado: análisis estático completado; 12 archivos JavaScript válidos.
+
+- Comando: npm test
+  Resultado: 4 pruebas ejecutadas, 4 aprobadas, 0 fallidas.
+  Casos: perfil con datos (200), perfil vacío (204), sesión ausente (401)
+  y proveedor no disponible (503 sin datos sensibles).
+
+- Comando: npm ci && npm run export:web (spikes/react_native_camera)
+  Resultado: exportación Expo completada; bundle web generado con 189 módulos,
+  354 kB de JavaScript, index.html y metadata.json.
+
+- Flutter/Dart no se encuentran instalados en este entorno de automatización local.
+- La ejecución completa de Flutter, la cobertura y las compilaciones Android/iOS se delegan a GitHub Actions.
+- No se declara una prueba Flutter en verde hasta disponer del resultado de la CI.
