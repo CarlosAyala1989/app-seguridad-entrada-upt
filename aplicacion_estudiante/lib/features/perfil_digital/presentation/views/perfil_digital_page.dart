@@ -81,11 +81,16 @@ class _ProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       children: [
         CircleAvatar(
-          radius: 44,
-          child: Text(
-            perfil.nombreCompleto.isEmpty ? '?' : perfil.nombreCompleto[0],
-            style: Theme.of(context).textTheme.headlineLarge,
-          ),
+          radius: 48,
+          backgroundImage: (perfil.fotoUrl != null && perfil.fotoUrl!.isNotEmpty)
+            ? NetworkImage(perfil.fotoUrl!)
+            : null,
+          child: (perfil.fotoUrl == null || perfil.fotoUrl!.isEmpty)
+            ? Text(
+              perfil.nombreCompleto.isEmpty ? '?' : perfil.nombreCompleto[0],
+              style: Theme.of(context).textTheme.headlineLarge,
+            )
+            : null,
         ),
         const SizedBox(height: 20),
         Text(
