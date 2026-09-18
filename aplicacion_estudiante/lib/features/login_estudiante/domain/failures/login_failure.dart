@@ -45,3 +45,13 @@ final class LoginGenericoFailure extends LoginFailure {
     super.message = 'Ocurrió un error inesperado al iniciar sesión.',
   ]);
 }
+
+
+
+/// Fallo cuando el código institucional no cumple el formato (10 dígitos).
+/// Se lanza antes de contactar al repositorio, sin tráfico de red.
+final class CodigoInvalidoFailure extends LoginFailure {
+  const CodigoInvalidoFailure([
+    super.message = 'El código institucional debe tener exactamente 10 dígitos.',
+  ]);
+}
