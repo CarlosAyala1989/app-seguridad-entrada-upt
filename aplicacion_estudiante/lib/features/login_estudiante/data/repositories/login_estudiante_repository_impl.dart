@@ -18,16 +18,22 @@ final class LoginEstudianteRepositoryImpl implements LoginEstudianteRepository {
   final LoginEstudianteRemoteDataSource _remoteDataSource;
   final SecureSessionStorage _sessionStorage;
 
-  @override
+   @override
   Future<CaptchaIntranet> obtenerCaptcha() async {
     try {
       final dto = await _remoteDataSource.obtenerCaptcha();
       return dto.toDomain();
     } on NetworkFailure catch (e) {
+      // ignore: avoid_print
+      print('DEBUG CAPTCHA (NetworkFailure): ${e.message}');
       throw IntranetNoDisponibleFailure(e.message);
     } on Failure catch (e) {
+      // ignore: avoid_print
+      print('DEBUG CAPTCHA (Failure): ${e.message}');
       throw LoginGenericoFailure(e.message);
-    } catch (_) {
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('DEBUG CAPTCHA (otro): $e\n$st');
       throw const LoginGenericoFailure();
     }
   }

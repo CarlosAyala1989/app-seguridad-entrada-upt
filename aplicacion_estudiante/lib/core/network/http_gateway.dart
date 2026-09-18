@@ -104,9 +104,13 @@ final class IoHttpGateway implements HttpGateway {
       );
     } on Failure {
       rethrow;
-    } on SocketException {
+        } on SocketException catch (e) {
+      // ignore: avoid_print
+      print('DEBUG GATEWAY SocketException: $e | URL: $_baseUrlNormalizada$path');
       throw const NetworkFailure();
-    } on TimeoutException {
+    } on TimeoutException catch (e) {
+      // ignore: avoid_print
+      print('DEBUG GATEWAY Timeout: $e | URL: $_baseUrlNormalizada$path');
       throw const NetworkFailure(AppStrings.timeoutError);
     } on FormatException {
       throw const DataFailure();
