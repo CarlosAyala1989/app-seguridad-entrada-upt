@@ -1,6 +1,6 @@
 import '../../shared/l10n/app_strings.dart';
 
-sealed class Failure implements Exception {
+abstract class Failure implements Exception {
   const Failure(this.message);
 
   final String message;
