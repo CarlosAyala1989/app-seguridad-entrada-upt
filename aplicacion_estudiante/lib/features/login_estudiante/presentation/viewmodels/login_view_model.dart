@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/error/failure.dart';
@@ -31,7 +32,7 @@ final class LoginViewModel {
   final _stateController = StreamController<LoginState>.broadcast();
   LoginState _estadoActual = const LoginInitialState();
 
-  Timer? _pollingTimer;
+  bool _pollingActivo = false;
 
   Stream<LoginState> get estado => _stateController.stream;
   LoginState get estadoActual => _estadoActual;
@@ -43,7 +44,7 @@ final class LoginViewModel {
     }
   }
 
-  /// 1. Solicita un nuevo CAPTCHA para iniciar el flujo.
+  /// 1. Carga el CAPTCHA institucional.
   Future<void> cargarCaptcha() async {
     _cancelarPolling();
     _emitir(const LoginCargandoCaptchaState());
@@ -62,7 +63,7 @@ final class LoginViewModel {
     }
   }
 
-  /// 2. Valida las credenciales de intranet y el CAPTCHA ingresado.
+  /// 2. Valida las credenciales de intranet y prepara la autorización de Google.
   Future<void> verificarIntranet({
     required String transaccionId,
     required String codigo,
@@ -110,8 +111,8 @@ final class LoginViewModel {
         captcha: captchaLimpio,
       );
 
-      // Una vez verificada la intranet, iniciamos automáticamente la transacción Google.
-      await _iniciarGoogle(verificacion.verificacionIntranetId);
+      // Prepara la URL de Google sin abrirla automáticamente
+      await _prepararGoogle(verificacion.verificacionIntranetId);
     } on Failure catch (e) {
       _emitir(LoginErrorState(mensaje: e.message));
     } catch (_) {
@@ -123,73 +124,100 @@ final class LoginViewModel {
     }
   }
 
-  /// 3. Inicia la transacción de Google y lanza el navegador externo.
-  Future<void> _iniciarGoogle(String verificacionIntranetId) async {
+  /// 3. Obtiene la URL de Google y emite el estado LoginGooglePreparadoState.
+  Future<void> _prepararGoogle(String verificacionIntranetId) async {
     try {
       final autorizacion = await _iniciarGoogleUseCase(
         verificacionIntranetId: verificacionIntranetId,
       );
 
       _emitir(
-        LoginEsperandoGoogleState(
+        LoginGooglePreparadoState(
           transaccionId: autorizacion.transaccionId,
           urlAutorizacion: autorizacion.urlAutorizacion,
+          expiraEn: autorizacion.expiraEn,
         ),
-      );
-
-      await abrirNavegadorGoogle(autorizacion.urlAutorizacion);
-
-      _iniciarPollingGoogle(
-        transaccionId: autorizacion.transaccionId,
-        expiraEn: autorizacion.expiraEn,
       );
     } on Failure catch (e) {
       _emitir(LoginErrorState(mensaje: e.message));
     } catch (_) {
       _emitir(
         const LoginErrorState(
-          mensaje: 'No se pudo iniciar el proceso con Google Workspace.',
+          mensaje: 'No se pudo preparar la autenticación con Google.',
         ),
       );
     }
   }
 
-  /// Abre la URL en el navegador externo del dispositivo.
+  /// 4. Acción directa del botón «Continuar con Google»: abre el navegador e inicia polling.
+  Future<void> ejecutarContinuarGoogle({
+    required Uri urlAutorizacion,
+    required String transaccionId,
+    required DateTime expiraEn,
+  }) async {
+    _emitir(
+      LoginEsperandoGoogleState(
+        transaccionId: transaccionId,
+        urlAutorizacion: urlAutorizacion,
+      ),
+    );
+
+    await abrirNavegadorGoogle(urlAutorizacion);
+    unawaited(
+      _iniciarPollingSecuencial(
+        transaccionId: transaccionId,
+        expiraEn: expiraEn,
+      ),
+    );
+  }
+
+  /// Abre la URL en el navegador externo respetando las reglas de Chrome/Web y móvil.
   Future<void> abrirNavegadorGoogle(Uri url) async {
     try {
-      final puedeAbrir = await canLaunchUrl(url);
-      if (puedeAbrir) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        _emitir(
-          const LoginErrorState(
-            mensaje: 'No se pudo abrir el navegador web externo.',
-          ),
-        );
-      }
+      await launchUrl(
+        url,
+        mode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
+        webOnlyWindowName: '_blank',
+      );
     } catch (_) {
       _emitir(
         const LoginErrorState(
-          mensaje: 'Ocurrió un problema al abrir el navegador.',
+          mensaje: 'No se pudo abrir el navegador. Vuelve a intentarlo.',
         ),
       );
     }
   }
 
-  /// 4. Polling cada 2 segundos hasta COMPLETA, ERROR o vencimiento.
-  void _iniciarPollingGoogle({
+  /// 5. Polling secuencial: espera al menos 2s entre respuestas sin solapamientos.
+  Future<void> _iniciarPollingSecuencial({
     required String transaccionId,
     required DateTime expiraEn,
-  }) {
+  }) async {
     _cancelarPolling();
+    _pollingActivo = true;
 
-    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-      // Validar si la transacción expiró por tiempo límite del contrato
+    while (_pollingActivo) {
       if (DateTime.now().isAfter(expiraEn)) {
-        _cancelarPolling();
+        _pollingActivo = false;
         _emitir(
           const LoginErrorState(
-            mensaje: 'El tiempo límite para iniciar con Google ha expirado.',
+            mensaje: 'El tiempo límite para autenticar con Google ha expirado.',
+          ),
+        );
+        return;
+      }
+
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (!_pollingActivo) break;
+
+      // Verificación de expiración tras la espera
+      if (DateTime.now().isAfter(expiraEn)) {
+        _pollingActivo = false;
+        _emitir(
+          const LoginErrorState(
+            mensaje: 'El tiempo límite para autenticar con Google ha expirado.',
           ),
         );
         return;
@@ -201,11 +229,10 @@ final class LoginViewModel {
         switch (resultado.estado) {
           case EstadoGoogle.pendiente:
           case EstadoGoogle.procesando:
-            // Sigue en espera, la siguiente iteración del timer volverá a consultar
             break;
 
           case EstadoGoogle.completa:
-            _cancelarPolling();
+            _pollingActivo = false;
             if (resultado.sesion != null) {
               _emitir(LoginExitosoState(resultado.sesion!.usuario));
             } else {
@@ -215,10 +242,11 @@ final class LoginViewModel {
                 ),
               );
             }
-            break;
+            return;
 
           case EstadoGoogle.error:
-            _cancelarPolling();
+            _pollingActivo = false;
+            debugPrint('DETALLE ERROR GOOGLE: ${resultado.errorMensaje}');
             _emitir(
               LoginErrorState(
                 mensaje:
@@ -226,23 +254,22 @@ final class LoginViewModel {
                     'Error al completar autenticación con Google.',
               ),
             );
-            break;
+            return;
         }
       } on Failure catch (e) {
-        _cancelarPolling();
+        _pollingActivo = false;
         _emitir(LoginErrorState(mensaje: e.message));
+        return;
       } catch (_) {
-        // En caso de micro-caída de red durante el polling, no detenemos inmediatamente el timer
+        // En micro-fallas de red continúa en la siguiente iteración sin abortar
       }
-    });
+    }
   }
 
   void _cancelarPolling() {
-    _pollingTimer?.cancel();
-    _pollingTimer = null;
+    _pollingActivo = false;
   }
 
-  /// Libera los recursos y detiene el temporizador.
   void dispose() {
     _cancelarPolling();
     _stateController.close();

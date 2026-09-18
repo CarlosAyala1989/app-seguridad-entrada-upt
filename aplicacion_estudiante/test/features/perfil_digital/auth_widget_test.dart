@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -19,24 +19,26 @@ void main() {
     useCase = ObtenerPerfilDigital(mockRepo);
   });
 
-  testWidgets('Muestra mensaje de error y boton Reintentar cuando falla la sesion', (WidgetTester tester) async {
-    when(() => mockRepo.obtenerPerfilActual())
-        .thenThrow(const UnauthorizedFailure('Sesion no autorizada'));
+  testWidgets(
+    'Muestra mensaje de error y boton Reintentar cuando falla la sesion',
+    (WidgetTester tester) async {
+      when(
+        () => mockRepo.obtenerPerfilActual(),
+      ).thenThrow(const UnauthorizedFailure('Sesion no autorizada'));
 
-    final viewModel = PerfilDigitalViewModel(obtenerPerfil: useCase);
+      final viewModel = PerfilDigitalViewModel(obtenerPerfil: useCase);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: PerfilDigitalPage(viewModel: viewModel),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(home: PerfilDigitalPage(viewModel: viewModel)),
+      );
 
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
-    expect(find.text('Reintentar'), findsOneWidget);
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Reintentar'), findsOneWidget);
 
-    viewModel.dispose();
-  });
+      viewModel.dispose();
+    },
+  );
 }

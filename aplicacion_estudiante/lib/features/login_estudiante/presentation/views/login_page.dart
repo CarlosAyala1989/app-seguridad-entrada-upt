@@ -60,6 +60,21 @@ class _LoginPageState extends State<LoginPage> {
     _limpiarCredencialesSensibles();
   }
 
+  Widget _construirImagenCaptcha(String imagenBase64) {
+    try {
+      final bytes = base64Decode(imagenBase64);
+      return Image.memory(
+        bytes,
+        height: 70,
+        filterQuality: FilterQuality.none,
+        errorBuilder: (_, _, _) =>
+            const Text('No se pudo mostrar el CAPTCHA. Solicita otro.'),
+      );
+    } catch (_) {
+      return const Text('No se pudo mostrar el CAPTCHA. Solicita otro.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
           builder: (context, snapshot) {
             final state = snapshot.data ?? const LoginInitialState();
 
+            // 1. Éxito: notifica a la pantalla principal y muestra confirmación
             if (state is LoginExitosoState) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 widget.onLoginExitoso?.call(state.usuario);
@@ -96,6 +112,52 @@ class _LoginPageState extends State<LoginPage> {
               );
             }
 
+            // 2. Google preparado: botón explícito para abrir la pestaña OAuth
+            if (state is LoginGooglePreparadoState) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        color: Colors.green,
+                        size: 56,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Identidad de intranet verificada',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Continúa con tu cuenta institucional de Google Workspace (@virtual.upt.pe) para finalizar.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: () =>
+                            widget.viewModel.ejecutarContinuarGoogle(
+                              urlAutorizacion: state.urlAutorizacion,
+                              transaccionId: state.transaccionId,
+                              expiraEn: state.expiraEn,
+                            ),
+                        icon: const Icon(Icons.open_in_browser),
+                        label: const Text('Continuar con Google'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // 3. Esperando Google: polling activo con opción de reabrir enlace
             if (state is LoginEsperandoGoogleState) {
               return Center(
                 child: Padding(
@@ -108,11 +170,14 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         state.mensajeInformativo,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Completa la autenticación institucional en la ventana abierta de Google.',
+                        'Completa la autenticación en el navegador y regresa a esta pantalla.',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 13, color: Colors.grey),
                       ),
@@ -122,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                           state.urlAutorizacion,
                         ),
                         icon: const Icon(Icons.open_in_browser),
-                        label: const Text('Reabrir navegador'),
+                        label: const Text('Reabrir ventana de Google'),
                       ),
                     ],
                   ),
@@ -130,27 +195,14 @@ class _LoginPageState extends State<LoginPage> {
               );
             }
 
-            if (state is LoginCargandoCaptchaState ||
-                state is LoginVerificandoIntranetState) {
-              final mensaje = state is LoginCargandoCaptchaState
-                  ? 'Obteniendo CAPTCHA institucional...'
-                  : 'Verificando datos con la intranet...';
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(mensaje),
-                  ],
-                ),
-              );
-            }
+            final estaVerificando = state is LoginVerificandoIntranetState;
+            final estaCargandoCaptcha = state is LoginCargandoCaptchaState;
 
             if (state is LoginCaptchaListoState) {
               _transaccionCaptchaActual = state.captcha.transaccionId;
             }
 
+            // 4. Formulario de credenciales y CAPTCHA
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -185,12 +237,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Ingrese sus credenciales de intranet para continuar con Google Workspace.',
+                    'Ingrese sus credenciales de intranet para validar su identidad.',
                     style: TextStyle(color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _codigoController,
+                    enabled: !estaVerificando,
                     keyboardType: TextInputType.number,
                     maxLength: 10,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -205,55 +258,58 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _contrasenaController,
+                    enabled: !estaVerificando,
                     keyboardType: TextInputType.number,
                     obscureText: true,
                     maxLength: 6,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
                       labelText: 'Contraseña de intranet',
-                      hintText: '1 a 6 dígitos',
+                      hintText: '1 a 6 dígitos numéricos',
                       prefixIcon: Icon(Icons.lock_outline),
                       border: OutlineInputBorder(),
                       counterText: '',
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (state is LoginCaptchaListoState) ...[
+                  if (estaCargandoCaptcha)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 12),
+                            Text('Cargando CAPTCHA...'),
+                          ],
+                        ),
+                      ),
+                    )
+                  else if (state is LoginCaptchaListoState) ...[
                     Row(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            color: Colors.grey.shade200,
-                            width: 150,
-                            height: 50,
-                            child: Builder(
-                              builder: (context) {
-                                try {
-                                  final bytes = base64Decode(
-                                    state.captcha.imagenBase64,
-                                  );
-                                  return Image.memory(
-                                    bytes,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, _, _) => const Center(
-                                      child: Icon(Icons.broken_image),
-                                    ),
-                                  );
-                                } catch (_) {
-                                  return const Center(
-                                    child: Icon(Icons.broken_image),
-                                  );
-                                }
-                              },
+                            color: Colors.grey.shade100,
+                            padding: const EdgeInsets.all(4),
+                            child: _construirImagenCaptcha(
+                              state.captcha.imagenBase64,
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         IconButton.filledTonal(
-                          onPressed: () => widget.viewModel.cargarCaptcha(),
+                          onPressed: estaVerificando
+                              ? null
+                              : () => widget.viewModel.cargarCaptcha(),
                           icon: const Icon(Icons.refresh),
-                          tooltip: 'Recargar CAPTCHA',
+                          tooltip: 'Solicitar nuevo CAPTCHA',
                         ),
                       ],
                     ),
@@ -261,12 +317,13 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                   TextField(
                     controller: _captchaController,
+                    enabled: !estaVerificando && !estaCargandoCaptcha,
                     keyboardType: TextInputType.number,
                     maxLength: 5,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
                       labelText: 'Código CAPTCHA',
-                      hintText: 'Ingrese los números de la imagen',
+                      hintText: 'Dígitos de la imagen',
                       prefixIcon: Icon(Icons.security),
                       border: OutlineInputBorder(),
                       counterText: '',
@@ -274,15 +331,32 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
-                    onPressed: _enviarFormulario,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Verificar y Continuar con Google'),
+                    onPressed: estaVerificando || estaCargandoCaptcha
+                        ? null
+                        : _enviarFormulario,
+                    icon: estaVerificando
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.arrow_forward),
+                    label: Text(
+                      estaVerificando
+                          ? 'Verificando con la intranet...'
+                          : 'Verificar datos de Intranet',
+                    ),
                   ),
                   if (state is LoginErrorState &&
                       state.puedeReintentarCaptcha) ...[
                     const SizedBox(height: 12),
                     TextButton.icon(
-                      onPressed: () => widget.viewModel.cargarCaptcha(),
+                      onPressed: estaVerificando
+                          ? null
+                          : () => widget.viewModel.cargarCaptcha(),
                       icon: const Icon(Icons.refresh),
                       label: const Text('Solicitar nuevo CAPTCHA'),
                     ),

@@ -57,3 +57,16 @@ final class LoginErrorState extends LoginState {
   final String mensaje;
   final bool puedeReintentarCaptcha;
 }
+
+/// Verificación de intranet lista; URL de Google generada y en espera del clic del usuario.
+final class LoginGooglePreparadoState extends LoginState {
+  const LoginGooglePreparadoState({
+    required this.transaccionId,
+    required this.urlAutorizacion,
+    required this.expiraEn,
+  });
+
+  final String transaccionId;
+  final Uri urlAutorizacion;
+  final DateTime expiraEn;
+}

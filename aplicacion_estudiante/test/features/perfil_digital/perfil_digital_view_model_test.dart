@@ -31,8 +31,10 @@ void main() {
     expect(emitted, hasLength(2));
     expect(emitted.first, isA<PerfilDigitalLoading>());
     expect(emitted.last, isA<PerfilDigitalData>());
-    expect((emitted.last as PerfilDigitalData).perfil.nombreCompleto,
-        'Estudiante de Prueba');
+    expect(
+      (emitted.last as PerfilDigitalData).perfil.nombreCompleto,
+      'Estudiante de Prueba',
+    );
 
     await viewModel.dispose();
   });

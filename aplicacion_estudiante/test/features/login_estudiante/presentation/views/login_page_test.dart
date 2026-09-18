@@ -9,28 +9,29 @@ import 'package:aplicacion_estudiante/features/login_estudiante/domain/usecases/
 import '../viewmodels/login_view_model_test.dart';
 
 void main() {
-  testWidgets('LoginPage renderiza inputs de credenciales y botón de continuar', (tester) async {
-    final repository = FakeLoginEstudianteRepository();
-    final viewModel = LoginViewModel(
-      obtenerCaptchaUseCase: ObtenerCaptchaUseCase(repository),
-      verificarIntranetUseCase: VerificarIntranetUseCase(repository),
-      iniciarGoogleUseCase: IniciarGoogleUseCase(repository),
-      consultarEstadoGoogleUseCase: ConsultarEstadoGoogleUseCase(repository),
-    );
+  testWidgets(
+    'LoginPage renderiza inputs de credenciales y botón de continuar',
+    (tester) async {
+      final repository = FakeLoginEstudianteRepository();
+      final viewModel = LoginViewModel(
+        obtenerCaptchaUseCase: ObtenerCaptchaUseCase(repository),
+        verificarIntranetUseCase: VerificarIntranetUseCase(repository),
+        iniciarGoogleUseCase: IniciarGoogleUseCase(repository),
+        consultarEstadoGoogleUseCase: ConsultarEstadoGoogleUseCase(repository),
+      );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: LoginPage(viewModel: viewModel),
-      ),
-    );
+      await tester.pumpWidget(
+        MaterialApp(home: LoginPage(viewModel: viewModel)),
+      );
 
-    // Permite procesar el initState que llama a cargarCaptcha
-    await tester.pumpAndSettle();
+      // Permite procesar el initState que llama a cargarCaptcha
+      await tester.pumpAndSettle();
 
-    expect(find.text('Ingreso de Estudiantes'), findsOneWidget);
-    expect(find.byType(TextField), findsNWidgets(3));
-    expect(find.byType(FilledButton), findsOneWidget);
+      expect(find.text('Ingreso de Estudiantes'), findsOneWidget);
+      expect(find.byType(TextField), findsNWidgets(3));
+      expect(find.byType(FilledButton), findsOneWidget);
 
-    viewModel.dispose();
-  });
-}s
+      viewModel.dispose();
+    },
+  );
+}

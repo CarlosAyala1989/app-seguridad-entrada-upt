@@ -35,9 +35,9 @@ final class LoginEstudianteRemoteDataSourceImpl
 
   @override
   Future<CaptchaIntranetDto> obtenerCaptcha() async {
-    final response = await _httpGateway.get(
-      '/registro-estudiante/intranet/captcha',
-    );
+    final response = await _httpGateway
+        .get('/registro-estudiante/intranet/captcha')
+        .timeout(const Duration(seconds: 45));
     final datos = _extraerDatos(response);
     return CaptchaIntranetDto.fromJson(datos);
   }
@@ -49,15 +49,17 @@ final class LoginEstudianteRemoteDataSourceImpl
     required String contrasena,
     required String captcha,
   }) async {
-    final response = await _httpGateway.post(
-      '/registro-estudiante/intranet/verificar',
-      body: {
-        'transaccion_id': transaccionId,
-        'codigo': codigo,
-        'contrasena': contrasena,
-        'captcha': captcha,
-      },
-    );
+    final response = await _httpGateway
+        .post(
+          '/registro-estudiante/intranet/verificar',
+          body: {
+            'transaccion_id': transaccionId,
+            'codigo': codigo,
+            'contrasena': contrasena,
+            'captcha': captcha,
+          },
+        )
+        .timeout(const Duration(seconds: 120));
     final datos = _extraerDatos(response);
     return VerificacionIntranetDto.fromJson(datos);
   }
@@ -66,29 +68,33 @@ final class LoginEstudianteRemoteDataSourceImpl
   Future<AutorizacionGoogleDto> iniciarGoogle({
     required String verificacionIntranetId,
   }) async {
-    final response = await _httpGateway.post(
-      '/registro-estudiante/google/iniciar',
-      body: {'verificacion_intranet_id': verificacionIntranetId},
-    );
+    final response = await _httpGateway
+        .post(
+          '/registro-estudiante/google/iniciar',
+          body: {'verificacion_intranet_id': verificacionIntranetId},
+        )
+        .timeout(const Duration(seconds: 15));
     final datos = _extraerDatos(response);
     return AutorizacionGoogleDto.fromJson(datos);
   }
 
   @override
   Future<EstadoGoogleDto> consultarEstadoGoogle(String transaccionId) async {
-    final response = await _httpGateway.get(
-      '/registro-estudiante/google/estado/$transaccionId',
-    );
+    final response = await _httpGateway
+        .get('/registro-estudiante/google/estado/$transaccionId')
+        .timeout(const Duration(seconds: 15));
     final datos = _extraerDatos(response);
     return EstadoGoogleDto.fromJson(datos);
   }
 
   @override
   Future<SesionEstudianteDto> renovarSesion(String tokenRenovacion) async {
-    final response = await _httpGateway.post(
-      '/autenticacion/renovar-sesion',
-      body: {'token_renovacion': tokenRenovacion},
-    );
+    final response = await _httpGateway
+        .post(
+          '/autenticacion/renovar-sesion',
+          body: {'token_renovacion': tokenRenovacion},
+        )
+        .timeout(const Duration(seconds: 15));
     final datos = _extraerDatos(response);
     return SesionEstudianteDto.fromJson(datos);
   }

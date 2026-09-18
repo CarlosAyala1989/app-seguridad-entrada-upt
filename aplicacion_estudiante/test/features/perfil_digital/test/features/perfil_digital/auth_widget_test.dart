@@ -20,28 +20,30 @@ void main() {
     useCase = ObtenerPerfilDigital(mockRepo);
   });
 
-  testWidgets('Muestra mensaje de error y botón Reintentar cuando falla la sesión', (WidgetTester tester) async {
-    // 1. Simular falla de autenticación en el repositorio
-    when(() => mockRepo.obtenerPerfilActual())
-        .thenThrow(const UnauthorizedFailure('Sesión no autorizada'));
+  testWidgets(
+    'Muestra mensaje de error y botón Reintentar cuando falla la sesión',
+    (WidgetTester tester) async {
+      // 1. Simular falla de autenticación en el repositorio
+      when(
+        () => mockRepo.obtenerPerfilActual(),
+      ).thenThrow(const UnauthorizedFailure('Sesión no autorizada'));
 
-    final viewModel = PerfilDigitalViewModel(obtenerPerfil: useCase);
+      final viewModel = PerfilDigitalViewModel(obtenerPerfil: useCase);
 
-    // 2. Renderizar la página
-    await tester.pumpWidget(
-      MaterialApp(
-        home: PerfilDigitalPage(viewModel: viewModel),
-      ),
-    );
+      // 2. Renderizar la página
+      await tester.pumpWidget(
+        MaterialApp(home: PerfilDigitalPage(viewModel: viewModel)),
+      );
 
-    // 3. Procesar el microtask inicial y la emisión del Stream
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+      // 3. Procesar el microtask inicial y la emisión del Stream
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
-    // 4. Verificaciones en la UI:
-    expect(find.byIcon(Icons.error_outline), findsOneWidget);
-    expect(find.text('Reintentar'), findsOneWidget);
+      // 4. Verificaciones en la UI:
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Reintentar'), findsOneWidget);
 
-    viewModel.dispose();
-  });
+      viewModel.dispose();
+    },
+  );
 }

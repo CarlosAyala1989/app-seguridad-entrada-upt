@@ -21,7 +21,7 @@ final class FakeLoginEstudianteRepository implements LoginEstudianteRepository {
       expiraEn: DateTime.now().add(const Duration(minutes: 5)),
     );
   }
-  
+
   @override
   Future<VerificacionIntranet> verificarIntranet({
     required String transaccionId,

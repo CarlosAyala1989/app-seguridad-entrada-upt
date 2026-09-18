@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import '../error/failure.dart';
 import '../../shared/l10n/app_strings.dart';
+import '../error/failure.dart';
 
 final class HttpResponseData {
   const HttpResponseData({required this.statusCode, this.body});
@@ -28,11 +28,16 @@ abstract interface class HttpGateway {
 final class IoHttpGateway implements HttpGateway {
   IoHttpGateway({
     required String baseUrl,
-    this.timeout = const Duration(seconds: 8),
-  }) : _baseUri = Uri.parse(baseUrl);
+    this.timeout = const Duration(seconds: 125),
+  }) : _baseUrlNormalizada = baseUrl.replaceAll(RegExp(r'/+$'), '');
 
-  final Uri _baseUri;
+  final String _baseUrlNormalizada;
   final Duration timeout;
+
+  Uri _construirUri(String path) {
+    final pathLimpio = path.startsWith('/') ? path : '/$path';
+    return Uri.parse('$_baseUrlNormalizada$pathLimpio');
+  }
 
   @override
   Future<HttpResponseData> get(
@@ -58,10 +63,10 @@ final class IoHttpGateway implements HttpGateway {
     Map<String, Object?>? body,
   }) async {
     final client = HttpClient();
-    client.connectionTimeout = timeout;
+    client.connectionTimeout = const Duration(seconds: 15);
 
     try {
-      final uri = _baseUri.resolve(path);
+      final uri = _construirUri(path);
       final request = await client.openUrl(method, uri).timeout(timeout);
       headers.forEach(request.headers.set);
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
@@ -81,11 +86,16 @@ final class IoHttpGateway implements HttpGateway {
       Map<String, Object?>? decodedBody;
 
       if (rawBody.trim().isNotEmpty) {
-        final decoded = jsonDecode(rawBody);
-        if (decoded is! Map<String, dynamic>) {
+        try {
+          final decoded = jsonDecode(rawBody);
+          if (decoded is Map<String, dynamic>) {
+            decodedBody = decoded.cast<String, Object?>();
+          } else {
+            throw const DataFailure();
+          }
+        } on FormatException {
           throw const DataFailure();
         }
-        decodedBody = decoded.cast<String, Object?>();
       }
 
       return HttpResponseData(

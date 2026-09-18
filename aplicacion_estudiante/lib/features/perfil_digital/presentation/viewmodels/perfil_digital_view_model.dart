@@ -7,7 +7,7 @@ import '../states/perfil_digital_state.dart';
 
 final class PerfilDigitalViewModel {
   PerfilDigitalViewModel({required ObtenerPerfilDigital obtenerPerfil})
-      : _obtenerPerfil = obtenerPerfil;
+    : _obtenerPerfil = obtenerPerfil;
 
   final ObtenerPerfilDigital _obtenerPerfil;
   final StreamController<PerfilDigitalState> _states =
@@ -22,18 +22,13 @@ final class PerfilDigitalViewModel {
     try {
       final perfil = await _obtenerPerfil();
       _emit(
-        perfil == null
-            ? const PerfilDigitalEmpty()
-            : PerfilDigitalData(perfil),
+        perfil == null ? const PerfilDigitalEmpty() : PerfilDigitalData(perfil),
       );
     } on Failure catch (failure) {
       _emit(PerfilDigitalError(message: failure.message, retry: cargar));
     } catch (_) {
       _emit(
-        PerfilDigitalError(
-          message: AppStrings.unexpectedError,
-          retry: cargar,
-        ),
+        PerfilDigitalError(message: AppStrings.unexpectedError, retry: cargar),
       );
     }
   }
