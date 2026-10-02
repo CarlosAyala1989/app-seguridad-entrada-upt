@@ -1,6 +1,0 @@
-DB_ROOT_PASSWORD=Carlos605!   
-DB_DATABASE=upt_ingreso  
-DB_USER=upt_app
-DB_PASSWORD=upt_app_2026
-DB_PORT=3307
-DB_HOST=localhost
