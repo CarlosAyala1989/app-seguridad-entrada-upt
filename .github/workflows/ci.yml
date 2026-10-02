@@ -21,6 +21,27 @@ jobs:
   backend:
     name: Node.js · análisis, pruebas y arranque
     runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: ingresoupt_ci
+          MARIADB_USER: ingresoupt_ci
+          MARIADB_PASSWORD: ingresoupt_ci_password
+          MARIADB_ROOT_PASSWORD: ingresoupt_ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: ingresoupt_ci
+      DB_USER: ingresoupt_ci
+      DB_PASSWORD: ingresoupt_ci_password
     defaults:
       run:
         working-directory: api-backend-entrada-upt
@@ -34,21 +55,20 @@ jobs:
       - run: npm ci
       - name: DoD-2 · Análisis estático
         run: npm run lint
+      - name: Preparar esquema de MariaDB
+        run: npm run migrar
       - name: DoD-3 · Pruebas unitarias
         run: npm test
       - name: DoD-1 · Arranque del backend y health check
         env:
           NODE_ENV: test
           PORT: 3000
-          PROFILE_PROVIDER: memory
-          PROFILE_SCENARIO: success
-          DEMO_SESSION_TOKEN: ci-session-token
         run: |
-          node server.js > /tmp/ingresoupt-backend.log 2>&1 &
+          npm start > /tmp/ingresoupt-backend.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
           for intento in {1..10}; do
-            if curl --fail --silent http://127.0.0.1:3000/health | grep -q '"status":"ok"'; then
+            if curl --fail --silent http://127.0.0.1:3000/api/salud | grep -q '"estado":"correcto"'; then
               exit 0
             fi
             sleep 1

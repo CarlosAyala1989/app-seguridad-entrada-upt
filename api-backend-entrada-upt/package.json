@@ -7,6 +7,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "node --watch src/server.js",
+    "lint": "node scripts/lint.js",
     "start": "node src/server.js",
     "test": "NODE_ENV=test node --test --test-concurrency=1",
     "test:flujo-completo": "NODE_ENV=test node scripts/verificar_flujo_completo.js",
