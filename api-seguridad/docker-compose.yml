@@ -1,0 +1,21 @@
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: upt-mariadb
+
+    restart: unless-stopped
+
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "${DB_PORT}:3306"
+
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:
