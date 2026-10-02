@@ -23,14 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: api-seguridad-backend
+        working-directory: api-backend-entrada-upt
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: api-seguridad-backend/package-lock.json
+          cache-dependency-path: api-backend-entrada-upt/package-lock.json
       - run: npm ci
       - name: DoD-2 · Análisis estático
         run: npm run lint
