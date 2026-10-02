@@ -57,6 +57,10 @@ jobs:
         run: npm run lint
       - name: Preparar esquema de MariaDB
         run: npm run migrar
+      - name: Cargar datos ficticios para las pruebas
+        env:
+          NODE_ENV: test
+        run: npm run sembrar:pruebas
       - name: DoD-3 · Pruebas unitarias
         run: npm test
       - name: DoD-1 · Arranque del backend y health check
