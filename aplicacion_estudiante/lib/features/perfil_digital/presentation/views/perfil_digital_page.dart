@@ -55,17 +55,17 @@ class _StateBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (state) {
       PerfilDigitalLoading() => Center(
-          child: Semantics(
-            label: AppStrings.loadingProfile,
-            child: const CircularProgressIndicator(),
-          ),
+        child: Semantics(
+          label: AppStrings.loadingProfile,
+          child: const CircularProgressIndicator(),
         ),
+      ),
       PerfilDigitalData(:final perfil) => _ProfileCard(perfil: perfil),
       PerfilDigitalEmpty() => _EmptyState(onRetry: onReload),
       PerfilDigitalError(:final message, :final retry) => _ErrorState(
-          message: message,
-          onRetry: retry,
-        ),
+        message: message,
+        onRetry: retry,
+      ),
     };
   }
 }
@@ -81,11 +81,19 @@ class _ProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       children: [
         CircleAvatar(
-          radius: 44,
-          child: Text(
-            perfil.nombreCompleto.isEmpty ? '?' : perfil.nombreCompleto[0],
-            style: Theme.of(context).textTheme.headlineLarge,
-          ),
+          radius: 48,
+          backgroundImage:
+              (perfil.fotoUrl != null && perfil.fotoUrl!.isNotEmpty)
+              ? NetworkImage(perfil.fotoUrl!)
+              : null,
+          child: (perfil.fotoUrl == null || perfil.fotoUrl!.isEmpty)
+              ? Text(
+                  perfil.nombreCompleto.isEmpty
+                      ? '?'
+                      : perfil.nombreCompleto[0],
+                  style: Theme.of(context).textTheme.headlineLarge,
+                )
+              : null,
         ),
         const SizedBox(height: 20),
         Text(
@@ -94,14 +102,8 @@ class _ProfileCard extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 24),
-        _ProfileRow(
-          label: AppStrings.code,
-          value: perfil.codigoInstitucional,
-        ),
-        _ProfileRow(
-          label: AppStrings.email,
-          value: perfil.correoInstitucional,
-        ),
+        _ProfileRow(label: AppStrings.code, value: perfil.codigoInstitucional),
+        _ProfileRow(label: AppStrings.email, value: perfil.correoInstitucional),
         _ProfileRow(label: AppStrings.role, value: perfil.rol),
         _ProfileRow(label: AppStrings.school, value: perfil.escuela),
         _ProfileRow(
@@ -123,10 +125,7 @@ class _ProfileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        title: Text(label),
-        subtitle: Text(value),
-      ),
+      child: ListTile(title: Text(label), subtitle: Text(value)),
     );
   }
 }

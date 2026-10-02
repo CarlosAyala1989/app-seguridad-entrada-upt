@@ -4,7 +4,7 @@ final class AppTheme {
   const AppTheme._();
 
   static ThemeData get light => ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF16285C)),
-        useMaterial3: true,
-      );
+    colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF16285C)),
+    useMaterial3: true,
+  );
 }

@@ -12,8 +12,8 @@ final class PerfilDigitalRemoteDataSourceImpl
   const PerfilDigitalRemoteDataSourceImpl({
     required HttpGateway httpGateway,
     required SessionTokenProvider sessionTokenProvider,
-  })  : _httpGateway = httpGateway,
-        _sessionTokenProvider = sessionTokenProvider;
+  }) : _httpGateway = httpGateway,
+       _sessionTokenProvider = sessionTokenProvider;
 
   final HttpGateway _httpGateway;
   final SessionTokenProvider _sessionTokenProvider;

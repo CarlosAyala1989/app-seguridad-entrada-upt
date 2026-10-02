@@ -21,8 +21,7 @@ final class AppStrings {
   static const timeoutError = 'El servicio tardó demasiado en responder.';
   static const unauthorizedError =
       'La sesión no es válida. Se requiere una nueva autenticación.';
-  static const serverError =
-      'El servicio no está disponible temporalmente.';
+  static const serverError = 'El servicio no está disponible temporalmente.';
   static const dataError =
       'La respuesta recibida no tiene el formato esperado.';
   static const unexpectedError =
