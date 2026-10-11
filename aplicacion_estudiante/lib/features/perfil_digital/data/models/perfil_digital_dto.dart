@@ -12,28 +12,61 @@ final class PerfilDigitalDto {
     this.photoUrl,
   });
 
+  /// Lee la respuesta de `GET /identidad-digital` (campo `datos`).
   factory PerfilDigitalDto.fromJson(Map<String, Object?> json) {
-    String requiredString(String key) {
-      final value = json[key];
+    String requiredString(Object? value, String key) {
       if (value is! String || value.trim().isEmpty) {
         throw DataFailure('El campo "$key" no es válido.');
       }
       return value;
     }
 
-    final photo = json['photoUrl'];
-    if (photo != null && photo is! String) {
-      throw const DataFailure('El campo "photoUrl" no es válido.');
+    Map<String, Object?> requiredMap(String key) {
+      final value = json[key];
+      if (value is! Map) {
+        throw DataFailure('El campo "$key" no es válido.');
+      }
+      return value.cast<String, Object?>();
     }
 
+    final roles = json['roles'];
+    if (roles is! List || roles.isEmpty || roles.first is! String) {
+      throw const DataFailure('El campo "roles" no es válido.');
+    }
+
+    final photo = json['foto_url'];
+    if (photo != null && photo is! String) {
+      throw const DataFailure('El campo "foto_url" no es válido.');
+    }
+
+    final verificacion = requiredMap('verificacion');
+    final acceso = requiredMap('acceso');
+    final perfilAcademico = json['perfil_academico'];
+    final escuela = perfilAcademico is Map ? perfilAcademico['escuela'] : null;
+
     return PerfilDigitalDto(
-      fullName: requiredString('fullName'),
-      institutionalCode: requiredString('institutionalCode'),
-      institutionalEmail: requiredString('institutionalEmail'),
-      role: requiredString('role'),
-      school: requiredString('school'),
-      verificationStatus: requiredString('verificationStatus'),
-      accessStatus: requiredString('accessStatus'),
+      fullName: requiredString(json['nombre_completo'], 'nombre_completo'),
+      institutionalCode: requiredString(
+        json['codigo_institucional'],
+        'codigo_institucional',
+      ),
+      institutionalEmail: requiredString(
+        json['correo_institucional'],
+        'correo_institucional',
+      ),
+      role: roles.first as String,
+      // Docentes y trabajadores no tienen perfil académico.
+      school: escuela is String && escuela.trim().isNotEmpty
+          ? escuela
+          : 'No registrada',
+      verificationStatus: requiredString(
+        verificacion['estado'],
+        'verificacion.estado',
+      ),
+      accessStatus: requiredString(
+        acceso['estado_autorizacion'],
+        'acceso.estado_autorizacion',
+      ),
       photoUrl: photo as String?,
     );
   }
