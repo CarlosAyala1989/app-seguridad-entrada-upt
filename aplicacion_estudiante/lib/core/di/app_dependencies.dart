@@ -58,7 +58,7 @@ final class AppDependencies {
 
   static Widget buildPerfilDigitalPage() {
     final gateway = ApiHttpGateway(baseUrl: ApiConfig.baseUrl);
-    const tokenProvider = DevelopmentSessionTokenProvider();
+    const tokenProvider = SecureSessionTokenProvider(SecureSessionStorage());
     final dataSource = PerfilDigitalRemoteDataSourceImpl(
       httpGateway: gateway,
       sessionTokenProvider: tokenProvider,
