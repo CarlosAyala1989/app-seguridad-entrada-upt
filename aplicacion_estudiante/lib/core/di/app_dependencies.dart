@@ -22,7 +22,7 @@ final class AppDependencies {
   const AppDependencies._();
 
   static Widget buildHome() {
-    final gateway = IoHttpGateway(baseUrl: ApiConfig.baseUrl);
+    final gateway = ApiHttpGateway(baseUrl: ApiConfig.baseUrl);
     const sessionStorage = SecureSessionStorage();
 
     final loginDataSource = LoginEstudianteRemoteDataSourceImpl(
@@ -57,8 +57,8 @@ final class AppDependencies {
   }
 
   static Widget buildPerfilDigitalPage() {
-    final gateway = IoHttpGateway(baseUrl: ApiConfig.baseUrl);
-    const tokenProvider = DevelopmentSessionTokenProvider();
+    final gateway = ApiHttpGateway(baseUrl: ApiConfig.baseUrl);
+    const tokenProvider = SecureSessionTokenProvider(SecureSessionStorage());
     final dataSource = PerfilDigitalRemoteDataSourceImpl(
       httpGateway: gateway,
       sessionTokenProvider: tokenProvider,

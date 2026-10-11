@@ -21,24 +21,30 @@ final class PerfilDigitalRemoteDataSourceImpl
   @override
   Future<PerfilDigitalDto?> obtenerPerfilActual() async {
     final token = await _sessionTokenProvider.readAccessToken();
+    if (token == null) {
+      throw const UnauthorizedFailure();
+    }
     final response = await _httpGateway.get(
-      '/api/v1/users/me/profile',
-      headers: token == null ? const {} : {'Authorization': 'Bearer $token'},
+      '/identidad-digital',
+      headers: {'Authorization': 'Bearer $token'},
     );
 
+    final body = response.body;
     switch (response.statusCode) {
       case 200:
-        final data = response.body?['data'];
-        if (data is! Map<String, dynamic>) {
+        final datos = body?['datos'];
+        if (datos is! Map<String, dynamic>) {
           throw const DataFailure();
         }
-        return PerfilDigitalDto.fromJson(data.cast<String, Object?>());
+        return PerfilDigitalDto.fromJson(datos.cast<String, Object?>());
       case 204:
         return null;
       case 401:
         throw const UnauthorizedFailure();
       default:
-        throw const ServerFailure();
+        final error = body?['error'];
+        final mensaje = error is Map ? error['mensaje'] as String? : null;
+        throw mensaje == null ? const ServerFailure() : ServerFailure(mensaje);
     }
   }
 }

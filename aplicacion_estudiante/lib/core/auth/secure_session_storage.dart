@@ -31,35 +31,46 @@ final class SecureSessionStorage {
   static const _keyAccesoExpiraEn = 'upt_token_acceso_expira_en';
   static const _keyRenovacionExpiraEn = 'upt_token_renovacion_expira_en';
 
-  /// Guarda de forma atómica los tokens y sus fechas de expiración.
+  /// Guarda los tokens y sus fechas de expiración.
+  ///
+  /// Las escrituras van una tras otra (no con `Future.wait`): en web,
+  /// flutter_secure_storage crea la clave de cifrado en la primera escritura
+  /// y varias escrituras simultáneas pueden crear claves distintas, lo que
+  /// después provoca `OperationError` al leer.
   Future<void> guardarTokens({
     required String tokenAcceso,
     required String tokenRenovacion,
     required DateTime tokenAccesoExpiraEn,
     required DateTime tokenRenovacionExpiraEn,
   }) async {
-    await Future.wait([
-      _storage.write(key: _keyTokenAcceso, value: tokenAcceso),
-      _storage.write(key: _keyTokenRenovacion, value: tokenRenovacion),
-      _storage.write(
-        key: _keyAccesoExpiraEn,
-        value: tokenAccesoExpiraEn.toIso8601String(),
-      ),
-      _storage.write(
-        key: _keyRenovacionExpiraEn,
-        value: tokenRenovacionExpiraEn.toIso8601String(),
-      ),
-    ]);
+    await _storage.write(key: _keyTokenAcceso, value: tokenAcceso);
+    await _storage.write(key: _keyTokenRenovacion, value: tokenRenovacion);
+    await _storage.write(
+      key: _keyAccesoExpiraEn,
+      value: tokenAccesoExpiraEn.toIso8601String(),
+    );
+    await _storage.write(
+      key: _keyRenovacionExpiraEn,
+      value: tokenRenovacionExpiraEn.toIso8601String(),
+    );
   }
 
   /// Recupera los tokens persistidos si existen todos los valores requeridos.
   Future<SessionTokensData?> leerTokens() async {
-    final tokenAcceso = await _storage.read(key: _keyTokenAcceso);
-    final tokenRenovacion = await _storage.read(key: _keyTokenRenovacion);
-    final accesoExpiraRaw = await _storage.read(key: _keyAccesoExpiraEn);
-    final renovacionExpiraRaw = await _storage.read(
-      key: _keyRenovacionExpiraEn,
-    );
+    final String? tokenAcceso;
+    final String? tokenRenovacion;
+    final String? accesoExpiraRaw;
+    final String? renovacionExpiraRaw;
+    try {
+      tokenAcceso = await _storage.read(key: _keyTokenAcceso);
+      tokenRenovacion = await _storage.read(key: _keyTokenRenovacion);
+      accesoExpiraRaw = await _storage.read(key: _keyAccesoExpiraEn);
+      renovacionExpiraRaw = await _storage.read(key: _keyRenovacionExpiraEn);
+    } catch (_) {
+      // Datos ilegibles (p. ej. cifrados con otra clave): se descarta la sesión.
+      await limpiar();
+      return null;
+    }
 
     if (tokenAcceso == null ||
         tokenRenovacion == null ||
@@ -69,14 +80,11 @@ final class SecureSessionStorage {
     }
 
     try {
-      final tokenAccesoExpiraEn = DateTime.parse(accesoExpiraRaw);
-      final tokenRenovacionExpiraEn = DateTime.parse(renovacionExpiraRaw);
-
       return SessionTokensData(
         tokenAcceso: tokenAcceso,
         tokenRenovacion: tokenRenovacion,
-        tokenAccesoExpiraEn: tokenAccesoExpiraEn,
-        tokenRenovacionExpiraEn: tokenRenovacionExpiraEn,
+        tokenAccesoExpiraEn: DateTime.parse(accesoExpiraRaw),
+        tokenRenovacionExpiraEn: DateTime.parse(renovacionExpiraRaw),
       );
     } on FormatException {
       await limpiar();
