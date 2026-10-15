@@ -10,12 +10,16 @@ class PerfilDigitalPage extends StatefulWidget {
     super.key,
     required this.viewModel,
     this.onCerrarSesion,
+    this.onVerCodigoQr,
   });
 
   final PerfilDigitalViewModel viewModel;
 
   /// Cierra la sesión; si es `null` no se muestra el botón.
   final Future<void> Function()? onCerrarSesion;
+
+  /// Abre la pantalla del código QR; si es `null` no se muestra el botón.
+  final VoidCallback? onVerCodigoQr;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -81,6 +85,7 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
           builder: (context, snapshot) => _StateBody(
             state: snapshot.data ?? const PerfilDigitalLoading(),
             onReload: widget.viewModel.cargar,
+            onVerCodigoQr: widget.onVerCodigoQr,
           ),
         ),
       ),
@@ -89,10 +94,15 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
 }
 
 class _StateBody extends StatelessWidget {
-  const _StateBody({required this.state, required this.onReload});
+  const _StateBody({
+    required this.state,
+    required this.onReload,
+    this.onVerCodigoQr,
+  });
 
   final PerfilDigitalState state;
   final Future<void> Function() onReload;
+  final VoidCallback? onVerCodigoQr;
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +113,10 @@ class _StateBody extends StatelessWidget {
           child: const CircularProgressIndicator(),
         ),
       ),
-      PerfilDigitalData(:final perfil) => _ProfileCard(perfil: perfil),
+      PerfilDigitalData(:final perfil) => _ProfileCard(
+        perfil: perfil,
+        onVerCodigoQr: onVerCodigoQr,
+      ),
       PerfilDigitalEmpty() => _EmptyState(onRetry: onReload),
       PerfilDigitalError(:final message, :final retry) => _ErrorState(
         message: message,
@@ -114,9 +127,10 @@ class _StateBody extends StatelessWidget {
 }
 
 class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.perfil});
+  const _ProfileCard({required this.perfil, this.onVerCodigoQr});
 
   final PerfilDigital perfil;
+  final VoidCallback? onVerCodigoQr;
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +168,14 @@ class _ProfileCard extends StatelessWidget {
           value: perfil.estadoVerificacion,
         ),
         _ProfileRow(label: AppStrings.access, value: perfil.estadoAcceso),
+        if (onVerCodigoQr != null) ...[
+          const SizedBox(height: 24),
+          FilledButton.icon(
+            onPressed: onVerCodigoQr,
+            icon: const Icon(Icons.qr_code_2),
+            label: const Text(AppStrings.showQr),
+          ),
+        ],
       ],
     );
   }
