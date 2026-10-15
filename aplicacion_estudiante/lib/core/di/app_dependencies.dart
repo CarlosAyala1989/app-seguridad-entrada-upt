@@ -1,4 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../features/codigo_qr/data/datasources/codigo_qr_remote_data_source.dart';
+import '../../features/codigo_qr/data/repositories/codigo_qr_repository_impl.dart';
+import '../../features/codigo_qr/domain/usecases/generar_codigo_qr_use_case.dart';
+import '../../features/codigo_qr/domain/usecases/revocar_codigo_qr_use_case.dart';
+import '../../features/codigo_qr/presentation/viewmodels/codigo_qr_view_model.dart';
+import '../../features/codigo_qr/presentation/views/codigo_qr_page.dart';
 
 import '../../features/login_estudiante/data/datasources/login_estudiante_remote_data_source.dart';
 import '../../features/login_estudiante/data/repositories/login_estudiante_repository_impl.dart';
@@ -16,6 +24,9 @@ import '../../features/perfil_digital/data/repositories/perfil_digital_repositor
 import '../../features/perfil_digital/domain/usecases/obtener_perfil_digital.dart';
 import '../../features/perfil_digital/presentation/viewmodels/perfil_digital_view_model.dart';
 import '../../features/perfil_digital/presentation/views/perfil_digital_page.dart';
+import '../../features/ubicacion/data/repositories/ubicacion_repository_impl.dart';
+import '../../features/ubicacion/domain/repositories/ubicacion_repository.dart';
+import '../../features/ubicacion/domain/usecases/obtener_ubicacion_confiable_use_case.dart';
 import '../auth/secure_session_storage.dart';
 import '../auth/session_token_provider.dart';
 import '../network/api_config.dart';
@@ -101,6 +112,9 @@ final class AppDependencies {
       builder: (context) {
         return PerfilDigitalPage(
           viewModel: viewModel,
+          onVerCodigoQr: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => buildCodigoQrPage()),
+          ),
           onCerrarSesion: () async {
             // Revoca la sesión en el backend y borra los tokens locales,
             // aunque no haya red (ver LoginEstudianteRepositoryImpl).
@@ -114,5 +128,28 @@ final class AppDependencies {
         );
       },
     );
+  }
+
+  static Widget buildCodigoQrPage() {
+    // La ubicación simulada solo existe en modo debug y con
+    // --dart-define=UBICACION_SIMULADA=true (para probar fuera del campus).
+    final UbicacionRepository ubicacion =
+        kDebugMode && UbicacionSimuladaRepository.activada
+        ? const UbicacionSimuladaRepository()
+        : const UbicacionRepositoryImpl();
+    final repository = CodigoQrRepositoryImpl(
+      CodigoQrRemoteDataSourceImpl(
+        httpGateway: _gateway,
+        sessionTokenProvider: _tokenProvider,
+      ),
+    );
+    final viewModel = CodigoQrViewModel(
+      generarCodigoQr: GenerarCodigoQrUseCase(
+        obtenerUbicacion: ObtenerUbicacionConfiableUseCase(ubicacion),
+        repository: repository,
+      ),
+      revocarCodigoQr: RevocarCodigoQrUseCase(repository),
+    );
+    return CodigoQrPage(viewModel: viewModel);
   }
 }

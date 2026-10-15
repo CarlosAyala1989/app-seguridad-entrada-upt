@@ -39,4 +39,25 @@ final class AppStrings {
       'código QR ni se muestra a nadie.';
   static const notNow = 'Ahora no';
   static const continueLabel = 'Continuar';
+  static const qrTitle = 'Mi código QR';
+  static const showQr = 'Mostrar mi código QR';
+  static const qrIntro =
+      'Genera un código QR temporal para presentarlo en la puerta. Se '
+      'renueva solo mientras tengas esta pantalla abierta.';
+  static const generateQr = 'Generar código QR';
+  static const generatingQr = 'Obteniendo tu ubicación y generando el código…';
+  static const qrValidUntil = 'Válido hasta las';
+  static const qrAutoRenew = 'Se renueva automáticamente al vencer.';
+  static const qrOneUse = 'Sirve una sola vez.';
+  static const revokeQr = 'Anular código';
+  static const revokeQrTitle = '¿Anular el código QR?';
+  static const revokeQrBody =
+      'El código dejará de servir en la puerta. Podrás generar otro cuando '
+      'lo necesites.';
+  static const qrRevoked = 'El código QR fue anulado.';
+  static const qrGenerateError = 'No fue posible generar el código QR.';
+  static const qrRevokeError = 'No fue posible anular el código QR.';
+  static const qrClockError =
+      'El código llegó vencido. Revisa que la fecha y hora del teléfono sean '
+      'automáticas.';
 }
