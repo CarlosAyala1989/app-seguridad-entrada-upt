@@ -28,6 +28,12 @@ abstract interface class HttpGateway {
     Map<String, Object?>? body,
     Duration? timeout,
   });
+
+  Future<HttpResponseData> delete(
+    String path, {
+    Map<String, String> headers = const {},
+    Duration? timeout,
+  });
 }
 
 /// Gateway basado en `package:http`: funciona en Android, iOS, escritorio
@@ -66,6 +72,15 @@ final class ApiHttpGateway implements HttpGateway {
     Duration? timeout,
   }) {
     return _send('POST', path, headers: headers, body: body, timeout: timeout);
+  }
+
+  @override
+  Future<HttpResponseData> delete(
+    String path, {
+    Map<String, String> headers = const {},
+    Duration? timeout,
+  }) {
+    return _send('DELETE', path, headers: headers, timeout: timeout);
   }
 
   Future<HttpResponseData> _send(
