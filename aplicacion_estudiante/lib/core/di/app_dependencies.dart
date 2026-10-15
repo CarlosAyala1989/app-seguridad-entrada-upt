@@ -58,7 +58,19 @@ final class AppDependencies {
 
   static Widget buildPerfilDigitalPage() {
     final gateway = ApiHttpGateway(baseUrl: ApiConfig.baseUrl);
-    const tokenProvider = SecureSessionTokenProvider(SecureSessionStorage());
+    const sessionStorage = SecureSessionStorage();
+    final loginRepository = LoginEstudianteRepositoryImpl(
+      remoteDataSource: LoginEstudianteRemoteDataSourceImpl(
+        httpGateway: gateway,
+      ),
+      sessionStorage: sessionStorage,
+    );
+    final tokenProvider = RenovableSessionTokenProvider(
+      leerTokens: sessionStorage.leerTokens,
+      limpiar: sessionStorage.limpiar,
+      renovar: (tokenRenovacion) async =>
+          (await loginRepository.renovarSesion(tokenRenovacion)).tokenAcceso,
+    );
     final dataSource = PerfilDigitalRemoteDataSourceImpl(
       httpGateway: gateway,
       sessionTokenProvider: tokenProvider,
