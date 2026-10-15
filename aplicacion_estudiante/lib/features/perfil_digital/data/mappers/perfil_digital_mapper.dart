@@ -10,6 +10,8 @@ extension PerfilDigitalMapper on PerfilDigitalDto {
     escuela: school,
     estadoVerificacion: verificationStatus,
     estadoAcceso: accessStatus,
+    estadoUsuario: userStatus,
+    puedeSolicitarCodigoQr: canRequestQr,
     fotoUrl: photoUrl,
   );
 }
