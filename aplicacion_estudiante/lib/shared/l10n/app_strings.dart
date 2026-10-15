@@ -60,4 +60,12 @@ final class AppStrings {
   static const qrClockError =
       'El código llegó vencido. Revisa que la fecha y hora del teléfono sean '
       'automáticas.';
+  static const canEnter = 'Puedes ingresar al campus';
+  static const cannotEnter = 'No puedes ingresar ahora';
+  static const contactSupport =
+      'Si crees que es un error, acude a la oficina de soporte.';
+  static const qrNotAvailable =
+      'Tu identidad aún no cumple los requisitos para solicitar un código QR.';
+  static const timeLeft = 'Tiempo restante';
+  static const secondsShort = 's';
 }

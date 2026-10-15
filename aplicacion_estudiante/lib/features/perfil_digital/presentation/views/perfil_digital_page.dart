@@ -168,15 +168,51 @@ class _ProfileCard extends StatelessWidget {
           value: perfil.estadoVerificacion,
         ),
         _ProfileRow(label: AppStrings.access, value: perfil.estadoAcceso),
+        const SizedBox(height: 16),
+        EstadoIngresoCard(perfil: perfil),
         if (onVerCodigoQr != null) ...[
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: onVerCodigoQr,
+            onPressed: perfil.puedeSolicitarCodigoQr ? onVerCodigoQr : null,
             icon: const Icon(Icons.qr_code_2),
             label: const Text(AppStrings.showQr),
           ),
+          if (!perfil.puedeSolicitarCodigoQr)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                AppStrings.qrNotAvailable,
+                textAlign: TextAlign.center,
+              ),
+            ),
         ],
       ],
+    );
+  }
+}
+
+/// Responde de un vistazo si hoy se puede ingresar (US-07).
+class EstadoIngresoCard extends StatelessWidget {
+  const EstadoIngresoCard({super.key, required this.perfil});
+
+  final PerfilDigital perfil;
+
+  @override
+  Widget build(BuildContext context) {
+    final esquema = Theme.of(context).colorScheme;
+    final puede = perfil.permiteIngreso;
+    return Card(
+      color: puede ? esquema.primaryContainer : esquema.errorContainer,
+      child: ListTile(
+        leading: Icon(
+          puede ? Icons.verified_user : Icons.block,
+          color: puede ? esquema.onPrimaryContainer : esquema.onErrorContainer,
+        ),
+        title: Text(puede ? AppStrings.canEnter : AppStrings.cannotEnter),
+        subtitle: puede
+            ? null
+            : Text('${perfil.motivoSinIngreso} ${AppStrings.contactSupport}'),
+      ),
     );
   }
 }

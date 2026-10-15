@@ -176,10 +176,14 @@ class _CodigoVisible extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        CuentaRegresivaQr(
+          segundosRestantes: estado.segundosRestantes,
+          duracionSegundos: codigo.duracionSegundos,
+        ),
+        const SizedBox(height: 8),
         Text(
           '${AppStrings.qrValidUntil} ${_hora(codigo.expiraEn)}',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 4),
         Text(
@@ -216,5 +220,44 @@ class _CodigoVisible extends StatelessWidget {
     final local = fecha.toLocal();
     String dos(int n) => n.toString().padLeft(2, '0');
     return '${dos(local.hour)}:${dos(local.minute)}:${dos(local.second)}';
+  }
+}
+
+/// Cuánto le queda al código (US-07). En los últimos 10 segundos se pinta en
+/// el color de error para avisar de que está por renovarse.
+class CuentaRegresivaQr extends StatelessWidget {
+  const CuentaRegresivaQr({
+    super.key,
+    required this.segundosRestantes,
+    required this.duracionSegundos,
+  });
+
+  final int segundosRestantes;
+  final int duracionSegundos;
+
+  @override
+  Widget build(BuildContext context) {
+    final esquema = Theme.of(context).colorScheme;
+    final urgente = segundosRestantes <= 10;
+    final color = urgente ? esquema.error : esquema.primary;
+    final progreso = duracionSegundos <= 0
+        ? 0.0
+        : (segundosRestantes / duracionSegundos).clamp(0.0, 1.0);
+    return Semantics(
+      label: '${AppStrings.timeLeft}: $segundosRestantes segundos',
+      child: Column(
+        children: [
+          Text(
+            '$segundosRestantes ${AppStrings.secondsShort}',
+            style: Theme.of(
+              context,
+            ).textTheme.displaySmall?.copyWith(color: color),
+          ),
+          const Text(AppStrings.timeLeft),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(value: progreso, color: color),
+        ],
+      ),
+    );
   }
 }

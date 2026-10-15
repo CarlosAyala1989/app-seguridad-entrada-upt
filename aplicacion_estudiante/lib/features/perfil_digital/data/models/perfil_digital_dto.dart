@@ -9,6 +9,8 @@ final class PerfilDigitalDto {
     required this.school,
     required this.verificationStatus,
     required this.accessStatus,
+    this.userStatus = 'ACTIVO',
+    this.canRequestQr = false,
     this.photoUrl,
   });
 
@@ -67,9 +69,16 @@ final class PerfilDigitalDto {
         acceso['estado_autorizacion'],
         'acceso.estado_autorizacion',
       ),
+      userStatus: acceso['estado_usuario'] is String
+          ? acceso['estado_usuario']! as String
+          : 'ACTIVO',
+      canRequestQr: _puedeSolicitarQr(json['preparacion_codigo_qr']),
       photoUrl: photo as String?,
     );
   }
+
+  static bool _puedeSolicitarQr(Object? preparacion) =>
+      preparacion is Map && preparacion['puede_solicitar'] == true;
 
   final String fullName;
   final String institutionalCode;
@@ -78,5 +87,7 @@ final class PerfilDigitalDto {
   final String school;
   final String verificationStatus;
   final String accessStatus;
+  final String userStatus;
+  final bool canRequestQr;
   final String? photoUrl;
 }
