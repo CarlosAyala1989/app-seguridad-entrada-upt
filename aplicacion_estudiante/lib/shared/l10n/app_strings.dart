@@ -4,6 +4,12 @@ final class AppStrings {
   static const appTitle = 'Ingreso UPT';
   static const profileTitle = 'Identidad digital UPT';
   static const loadingProfile = 'Cargando perfil digital';
+  static const preparingSession = 'Preparando una sesión segura…';
+  static const logout = 'Cerrar sesión';
+  static const logoutConfirmTitle = '¿Cerrar sesión?';
+  static const logoutConfirmBody =
+      'Para volver a ver tu identidad digital tendrás que iniciar sesión otra vez.';
+  static const cancel = 'Cancelar';
   static const emptyProfile =
       'La identidad digital todavía no está disponible.';
   static const emptyProfileHelp =
