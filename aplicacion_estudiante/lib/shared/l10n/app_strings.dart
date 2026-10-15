@@ -32,4 +32,11 @@ final class AppStrings {
       'La respuesta recibida no tiene el formato esperado.';
   static const unexpectedError =
       'Ocurrió un error inesperado. Inténtelo nuevamente.';
+  static const locationWhyTitle = 'Usaremos tu ubicación';
+  static const locationWhyBody =
+      'Al generar tu código QR enviamos tu ubicación actual para comprobar '
+      'que estás en una zona permitida del campus. No se guarda en el '
+      'código QR ni se muestra a nadie.';
+  static const notNow = 'Ahora no';
+  static const continueLabel = 'Continuar';
 }
