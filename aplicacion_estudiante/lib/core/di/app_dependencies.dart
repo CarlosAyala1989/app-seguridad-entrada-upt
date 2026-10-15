@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../features/login_estudiante/data/datasources/login_estudiante_remote_data_source.dart';
 import '../../features/login_estudiante/data/repositories/login_estudiante_repository_impl.dart';
+import '../../features/login_estudiante/domain/usecases/cerrar_sesion_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/consultar_estado_google_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/iniciar_google_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/obtener_captcha_use_case.dart';
+import '../../features/login_estudiante/domain/usecases/restaurar_o_renovar_sesion_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/verificar_intranet_use_case.dart';
 import '../../features/login_estudiante/presentation/viewmodels/login_view_model.dart';
 import '../../features/login_estudiante/presentation/views/login_page.dart';
+import '../../features/login_estudiante/presentation/views/sesion_gate.dart';
 import '../../features/perfil_digital/data/datasources/perfil_digital_remote_data_source.dart';
 import '../../features/perfil_digital/data/repositories/perfil_digital_repository_impl.dart';
 import '../../features/perfil_digital/domain/usecases/obtener_perfil_digital.dart';
@@ -21,24 +24,49 @@ import '../network/http_gateway.dart';
 final class AppDependencies {
   const AppDependencies._();
 
+  static final HttpGateway _gateway = ApiHttpGateway(
+    baseUrl: ApiConfig.baseUrl,
+  );
+  static const SecureSessionStorage _sessionStorage = SecureSessionStorage();
+  static final LoginEstudianteRepositoryImpl _loginRepository =
+      LoginEstudianteRepositoryImpl(
+        remoteDataSource: LoginEstudianteRemoteDataSourceImpl(
+          httpGateway: _gateway,
+        ),
+        sessionStorage: _sessionStorage,
+      );
+
+  /// Un único proveedor para toda la app, así las renovaciones simultáneas
+  /// se comparten.
+  static final SessionTokenProvider _tokenProvider =
+      RenovableSessionTokenProvider(
+        leerTokens: _sessionStorage.leerTokens,
+        limpiar: _sessionStorage.limpiar,
+        renovar: (tokenRenovacion) async =>
+            (await _loginRepository.renovarSesion(tokenRenovacion))
+                .tokenAcceso,
+      );
+
+  /// Pantalla inicial: restaura la sesión guardada o muestra el login.
   static Widget buildHome() {
-    final gateway = ApiHttpGateway(baseUrl: ApiConfig.baseUrl);
-    const sessionStorage = SecureSessionStorage();
-
-    final loginDataSource = LoginEstudianteRemoteDataSourceImpl(
-      httpGateway: gateway,
+    final restaurarSesion = RestaurarORenovarSesionUseCase(
+      repository: _loginRepository,
+      sessionStorage: _sessionStorage,
     );
-    final loginRepository = LoginEstudianteRepositoryImpl(
-      remoteDataSource: loginDataSource,
-      sessionStorage: sessionStorage,
+    return SesionGate(
+      restaurarSesion: restaurarSesion.call,
+      construirLogin: (_) => buildLoginPage(),
+      construirInicio: (_) => buildPerfilDigitalPage(),
     );
+  }
 
+  static Widget buildLoginPage() {
     final loginViewModel = LoginViewModel(
-      obtenerCaptchaUseCase: ObtenerCaptchaUseCase(loginRepository),
-      verificarIntranetUseCase: VerificarIntranetUseCase(loginRepository),
-      iniciarGoogleUseCase: IniciarGoogleUseCase(loginRepository),
+      obtenerCaptchaUseCase: ObtenerCaptchaUseCase(_loginRepository),
+      verificarIntranetUseCase: VerificarIntranetUseCase(_loginRepository),
+      iniciarGoogleUseCase: IniciarGoogleUseCase(_loginRepository),
       consultarEstadoGoogleUseCase: ConsultarEstadoGoogleUseCase(
-        loginRepository,
+        _loginRepository,
       ),
     );
 
@@ -57,15 +85,34 @@ final class AppDependencies {
   }
 
   static Widget buildPerfilDigitalPage() {
-    final gateway = ApiHttpGateway(baseUrl: ApiConfig.baseUrl);
-    const tokenProvider = SecureSessionTokenProvider(SecureSessionStorage());
     final dataSource = PerfilDigitalRemoteDataSourceImpl(
-      httpGateway: gateway,
-      sessionTokenProvider: tokenProvider,
+      httpGateway: _gateway,
+      sessionTokenProvider: _tokenProvider,
     );
     final repository = PerfilDigitalRepositoryImpl(dataSource);
     final obtenerPerfil = ObtenerPerfilDigital(repository);
     final viewModel = PerfilDigitalViewModel(obtenerPerfil: obtenerPerfil);
-    return PerfilDigitalPage(viewModel: viewModel);
+    final cerrarSesion = CerrarSesionUseCase(
+      repository: _loginRepository,
+      sessionStorage: _sessionStorage,
+    );
+
+    return Builder(
+      builder: (context) {
+        return PerfilDigitalPage(
+          viewModel: viewModel,
+          onCerrarSesion: () async {
+            // Revoca la sesión en el backend y borra los tokens locales,
+            // aunque no haya red (ver LoginEstudianteRepositoryImpl).
+            await cerrarSesion();
+            if (!context.mounted) return;
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => buildLoginPage()),
+              (_) => false,
+            );
+          },
+        );
+      },
+    );
   }
 }
