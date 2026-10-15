@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/login_estudiante/data/datasources/login_estudiante_remote_data_source.dart';
 import '../../features/login_estudiante/data/repositories/login_estudiante_repository_impl.dart';
+import '../../features/login_estudiante/domain/usecases/cerrar_sesion_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/consultar_estado_google_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/iniciar_google_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/obtener_captcha_use_case.dart';
@@ -91,6 +92,27 @@ final class AppDependencies {
     final repository = PerfilDigitalRepositoryImpl(dataSource);
     final obtenerPerfil = ObtenerPerfilDigital(repository);
     final viewModel = PerfilDigitalViewModel(obtenerPerfil: obtenerPerfil);
-    return PerfilDigitalPage(viewModel: viewModel);
+    final cerrarSesion = CerrarSesionUseCase(
+      repository: _loginRepository,
+      sessionStorage: _sessionStorage,
+    );
+
+    return Builder(
+      builder: (context) {
+        return PerfilDigitalPage(
+          viewModel: viewModel,
+          onCerrarSesion: () async {
+            // Revoca la sesión en el backend y borra los tokens locales,
+            // aunque no haya red (ver LoginEstudianteRepositoryImpl).
+            await cerrarSesion();
+            if (!context.mounted) return;
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => buildLoginPage()),
+              (_) => false,
+            );
+          },
+        );
+      },
+    );
   }
 }

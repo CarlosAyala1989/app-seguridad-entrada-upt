@@ -6,9 +6,16 @@ import '../states/perfil_digital_state.dart';
 import '../viewmodels/perfil_digital_view_model.dart';
 
 class PerfilDigitalPage extends StatefulWidget {
-  const PerfilDigitalPage({super.key, required this.viewModel});
+  const PerfilDigitalPage({
+    super.key,
+    required this.viewModel,
+    this.onCerrarSesion,
+  });
 
   final PerfilDigitalViewModel viewModel;
+
+  /// Cierra la sesión; si es `null` no se muestra el botón.
+  final Future<void> Function()? onCerrarSesion;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -27,10 +34,46 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
     super.dispose();
   }
 
+  bool _cerrando = false;
+
+  Future<void> _confirmarCierre() async {
+    if (_cerrando) return;
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(AppStrings.logoutConfirmTitle),
+        content: const Text(AppStrings.logoutConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(AppStrings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(AppStrings.logout),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) return;
+    setState(() => _cerrando = true);
+    await widget.onCerrarSesion!();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.profileTitle)),
+      appBar: AppBar(
+        title: const Text(AppStrings.profileTitle),
+        actions: [
+          if (widget.onCerrarSesion != null)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: AppStrings.logout,
+              onPressed: _cerrando ? null : _confirmarCierre,
+            ),
+        ],
+      ),
       body: SafeArea(
         child: StreamBuilder<PerfilDigitalState>(
           stream: widget.viewModel.states,
