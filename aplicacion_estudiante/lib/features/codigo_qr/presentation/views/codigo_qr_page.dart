@@ -7,9 +7,16 @@ import '../states/codigo_qr_state.dart';
 import '../viewmodels/codigo_qr_view_model.dart';
 
 class CodigoQrPage extends StatefulWidget {
-  const CodigoQrPage({super.key, required this.viewModel});
+  const CodigoQrPage({
+    super.key,
+    required this.viewModel,
+    this.onVerAvisoPrivacidad,
+  });
 
   final CodigoQrViewModel viewModel;
+
+  /// Abre el aviso de privacidad desde la explicación de la ubicación.
+  final VoidCallback? onVerAvisoPrivacidad;
 
   @override
   State<CodigoQrPage> createState() => _CodigoQrPageState();
@@ -26,7 +33,10 @@ class _CodigoQrPageState extends State<CodigoQrPage> {
 
   Future<void> _generar() async {
     if (!_ubicacionExplicada) {
-      final continuar = await confirmarUsoUbicacion(context);
+      final continuar = await confirmarUsoUbicacion(
+        context,
+        onVerAvisoPrivacidad: widget.onVerAvisoPrivacidad,
+      );
       if (!continuar || !mounted) return;
       _ubicacionExplicada = true;
     }

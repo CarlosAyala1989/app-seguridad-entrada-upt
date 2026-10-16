@@ -11,6 +11,7 @@ class PerfilDigitalPage extends StatefulWidget {
     required this.viewModel,
     this.onCerrarSesion,
     this.onVerCodigoQr,
+    this.onVerAvisoPrivacidad,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -20,6 +21,9 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Abre la pantalla del código QR; si es `null` no se muestra el botón.
   final VoidCallback? onVerCodigoQr;
+
+  /// Abre el aviso de privacidad; si es `null` no se muestra el botón.
+  final VoidCallback? onVerAvisoPrivacidad;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -70,6 +74,12 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
       appBar: AppBar(
         title: const Text(AppStrings.profileTitle),
         actions: [
+          if (widget.onVerAvisoPrivacidad != null)
+            IconButton(
+              icon: const Icon(Icons.privacy_tip_outlined),
+              tooltip: AppStrings.privacyTitle,
+              onPressed: widget.onVerAvisoPrivacidad,
+            ),
           if (widget.onCerrarSesion != null)
             IconButton(
               icon: const Icon(Icons.logout),

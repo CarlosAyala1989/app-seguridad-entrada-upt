@@ -24,6 +24,8 @@ import '../../features/perfil_digital/data/repositories/perfil_digital_repositor
 import '../../features/perfil_digital/domain/usecases/obtener_perfil_digital.dart';
 import '../../features/perfil_digital/presentation/viewmodels/perfil_digital_view_model.dart';
 import '../../features/perfil_digital/presentation/views/perfil_digital_page.dart';
+import '../../features/privacidad/data/aviso_privacidad_vigente.dart';
+import '../../features/privacidad/presentation/views/aviso_privacidad_page.dart';
 import '../../features/ubicacion/data/repositories/ubicacion_repository_impl.dart';
 import '../../features/ubicacion/domain/repositories/ubicacion_repository.dart';
 import '../../features/ubicacion/domain/usecases/obtener_ubicacion_confiable_use_case.dart';
@@ -115,6 +117,7 @@ final class AppDependencies {
           onVerCodigoQr: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => buildCodigoQrPage()),
           ),
+          onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
           onCerrarSesion: () async {
             // Revoca la sesión en el backend y borra los tokens locales,
             // aunque no haya red (ver LoginEstudianteRepositoryImpl).
@@ -150,6 +153,20 @@ final class AppDependencies {
       ),
       revocarCodigoQr: RevocarCodigoQrUseCase(repository),
     );
-    return CodigoQrPage(viewModel: viewModel);
+    return Builder(
+      builder: (context) => CodigoQrPage(
+        viewModel: viewModel,
+        onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+      ),
+    );
+  }
+
+  /// Abre el aviso de privacidad vigente (US-24).
+  static void abrirAvisoPrivacidad(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AvisoPrivacidadPage(aviso: avisoPrivacidadVigente),
+      ),
+    );
   }
 }
