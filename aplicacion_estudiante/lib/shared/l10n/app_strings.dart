@@ -68,4 +68,8 @@ final class AppStrings {
       'Tu identidad aún no cumple los requisitos para solicitar un código QR.';
   static const timeLeft = 'Tiempo restante';
   static const secondsShort = 's';
+  static const privacyTitle = 'Aviso de privacidad';
+  static const privacyVersion = 'Versión';
+  static const privacySince = 'vigente desde el';
+  static const moreInfo = 'Más información';
 }

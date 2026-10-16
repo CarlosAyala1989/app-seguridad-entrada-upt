@@ -4,7 +4,13 @@ import '../../../../shared/l10n/app_strings.dart';
 
 /// Explica para qué se usa la ubicación antes de que el sistema pida el
 /// permiso. Devuelve `true` si la persona decide continuar.
-Future<bool> confirmarUsoUbicacion(BuildContext context) async {
+///
+/// Con [onVerAvisoPrivacidad] se muestra además «Más información», que abre
+/// el aviso de privacidad (US-24) sin cerrar el diálogo.
+Future<bool> confirmarUsoUbicacion(
+  BuildContext context, {
+  VoidCallback? onVerAvisoPrivacidad,
+}) async {
   final continuar = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
@@ -12,6 +18,11 @@ Future<bool> confirmarUsoUbicacion(BuildContext context) async {
       title: const Text(AppStrings.locationWhyTitle),
       content: const Text(AppStrings.locationWhyBody),
       actions: [
+        if (onVerAvisoPrivacidad != null)
+          TextButton(
+            onPressed: onVerAvisoPrivacidad,
+            child: const Text(AppStrings.moreInfo),
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
           child: const Text(AppStrings.notNow),
