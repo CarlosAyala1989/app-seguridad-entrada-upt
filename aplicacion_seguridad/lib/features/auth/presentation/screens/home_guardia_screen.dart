@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../validacion/data/models/resultado_validacion_model.dart';
+import '../../../validacion/presentation/screens/resultado_validacion_screen.dart';
 import '../controllers/auth_controller.dart';
 
 class HomeGuardiaScreen extends StatelessWidget {
@@ -198,9 +200,9 @@ class HomeGuardiaScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Placeholder funcional para los módulos siguientes (Escaneo QR, historial, etc.)
+              // Módulo de Validación de Accesos (US-09)
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E293B),
                   borderRadius: BorderRadius.circular(16),
@@ -215,28 +217,110 @@ class HomeGuardiaScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.qr_code_scanner,
-                        size: 54,
+                        Icons.qr_code_scanner_rounded,
+                        size: 50,
                         color: Color(0xFF38BDF8),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     const Text(
-                      'Puesto de Control Listo',
+                      'Puesto de Control de Accesos',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     const Text(
-                      'Sesión autenticada correctamente. El módulo de verificación de accesos y escaneo QR se activará en la siguiente fase.',
+                      'Valida credenciales QR institucionales y visualiza el resultado de acceso en tiempo real (US-09).',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
-                        fontSize: 14,
+                        fontSize: 13,
                         height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Botón para resultado AUTORIZADO
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A), // Verde
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.check_circle_outline, size: 20),
+                        label: const Text(
+                          'Validar Acceso (Simular Autorizado)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        onPressed: () {
+                          final mockAutorizado = ResultadoValidacionModel(
+                            resultado: 'AUTORIZADO',
+                            motivo: 'ACCESO_AUTORIZADO',
+                            mensaje: 'Ingreso autorizado.',
+                            registradoEn: DateTime.now(),
+                            puntoAccesoCodigo: 'PUERTA-PRINCIPAL',
+                            puntoAccesoNombre: 'Puerta Principal - Campus Capanique',
+                            identidad: const IdentidadEstudianteModel(
+                              nombreCompleto: 'María Elena Pérez Quispe',
+                              codigoInstitucional: '2023071234',
+                              escuela: 'Ingeniería de Sistemas',
+                              estadoAcademico: 'REGULAR',
+                              tiposUsuario: ['ESTUDIANTE'],
+                            ),
+                          );
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ResultadoValidacionScreen(
+                                resultado: mockAutorizado,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Botón para resultado DENEGADO
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFEF4444)),
+                          foregroundColor: const Color(0xFFF87171),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.cancel_outlined, size: 20),
+                        label: const Text(
+                          'Validar Acceso (Simular Denegado)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        onPressed: () {
+                          final mockDenegado = ResultadoValidacionModel(
+                            resultado: 'DENEGADO',
+                            motivo: 'CREDENCIAL_YA_UTILIZADA',
+                            mensaje: 'El código QR ya fue utilizado anteriormente.',
+                            registradoEn: DateTime.now(),
+                            puntoAccesoCodigo: 'PUERTA-PRINCIPAL',
+                            puntoAccesoNombre: 'Puerta Principal - Campus Capanique',
+                            identidad: null, // Por DoD de privacidad, denegado omite identidad
+                          );
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ResultadoValidacionScreen(
+                                resultado: mockDenegado,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
