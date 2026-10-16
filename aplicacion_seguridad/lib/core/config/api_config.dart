@@ -18,6 +18,8 @@ class ApiConfig {
   static const String renovarSesionPath = '/autenticacion/renovar-sesion';
   static const String consultarSesionPath = '/autenticacion/sesion';
   static const String cerrarSesionPath = '/autenticacion/cerrar-sesion';
+  static const String validarIngresoPath = '/ingresos/validar';
+  static const String ingresosRecientesPath = '/ingresos/recientes';
 
   static Uri uriFor(String path) {
     final base = baseUrl.endsWith('/')
