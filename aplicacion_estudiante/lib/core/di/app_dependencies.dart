@@ -8,6 +8,11 @@ import '../../features/codigo_qr/domain/usecases/revocar_codigo_qr_use_case.dart
 import '../../features/codigo_qr/presentation/viewmodels/codigo_qr_view_model.dart';
 import '../../features/codigo_qr/presentation/views/codigo_qr_page.dart';
 
+import '../../features/historial/data/datasources/historial_remote_data_source.dart';
+import '../../features/historial/data/repositories/historial_repository_impl.dart';
+import '../../features/historial/domain/usecases/obtener_historial_use_case.dart';
+import '../../features/historial/presentation/viewmodels/historial_view_model.dart';
+import '../../features/historial/presentation/views/historial_page.dart';
 import '../../features/login_estudiante/data/datasources/login_estudiante_remote_data_source.dart';
 import '../../features/login_estudiante/data/repositories/login_estudiante_repository_impl.dart';
 import '../../features/login_estudiante/domain/usecases/cerrar_sesion_use_case.dart';
@@ -118,6 +123,9 @@ final class AppDependencies {
             MaterialPageRoute<void>(builder: (_) => buildCodigoQrPage()),
           ),
           onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+          onVerHistorial: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => buildHistorialPage()),
+          ),
           onCerrarSesion: () async {
             // Revoca la sesión en el backend y borra los tokens locales,
             // aunque no haya red (ver LoginEstudianteRepositoryImpl).
@@ -130,6 +138,20 @@ final class AppDependencies {
           },
         );
       },
+    );
+  }
+
+  static Widget buildHistorialPage() {
+    final repository = HistorialRepositoryImpl(
+      HistorialRemoteDataSourceImpl(
+        httpGateway: _gateway,
+        sessionTokenProvider: _tokenProvider,
+      ),
+    );
+    return HistorialPage(
+      viewModel: HistorialViewModel(
+        obtenerHistorial: ObtenerHistorialUseCase(repository),
+      ),
     );
   }
 

@@ -72,4 +72,12 @@ final class AppStrings {
   static const privacyVersion = 'Versión';
   static const privacySince = 'vigente desde el';
   static const moreInfo = 'Más información';
+  static const historyTitle = 'Mi historial de ingresos';
+  static const historyAll = 'Todos';
+  static const historyEntries = 'Ingresos';
+  static const historyRejections = 'Rechazos';
+  static const historyEmpty = 'Todavía no hay ingresos ni rechazos registrados.';
+  static const historyMore = 'Cargar más';
+  static const historyAuthorized = 'Ingreso autorizado';
+  static const historyDenied = 'Ingreso rechazado';
 }
