@@ -1,6 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../features/biometria/data/local_auth_autenticador.dart';
+import '../../features/biometria/data/preferencia_biometria_secure_storage.dart';
+import '../../features/biometria/domain/usecases/bloqueo_biometrico_use_case.dart';
+import '../../features/biometria/presentation/views/bloqueo_biometrico_gate.dart';
+import '../../features/biometria/presentation/widgets/ajustes_biometria_tile.dart';
 import '../../features/codigo_qr/data/datasources/codigo_qr_remote_data_source.dart';
 import '../../features/codigo_qr/data/repositories/codigo_qr_repository_impl.dart';
 import '../../features/codigo_qr/domain/usecases/generar_codigo_qr_use_case.dart';
@@ -65,6 +70,41 @@ final class AppDependencies {
                 .tokenAcceso,
       );
 
+  /// Permite navegar al login desde la pantalla de bloqueo, que está por
+  /// encima de todas las rutas.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  static final BloqueoBiometricoUseCase _bloqueo = BloqueoBiometricoUseCase(
+    autenticador: LocalAuthAutenticador(),
+    preferencias: const PreferenciaBiometriaSecureStorage(),
+    haySesion: () async => await _sessionStorage.leerTokens() != null,
+  );
+
+  /// Revoca la sesión en el backend, borra los tokens locales (aunque no haya
+  /// red) y deja solo el login en la pila de pantallas.
+  static Future<void> _cerrarSesionYVolverAlLogin(NavigatorState? nav) async {
+    await CerrarSesionUseCase(
+      repository: _loginRepository,
+      sessionStorage: _sessionStorage,
+    )();
+    nav?.pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => buildLoginPage()),
+      (_) => false,
+    );
+  }
+
+  /// Cubre la app con la pantalla de bloqueo biométrico cuando corresponde.
+  static Widget envolverConBloqueo(BuildContext context, Widget? child) {
+    return BloqueoBiometricoGate(
+      debeBloquear: _bloqueo.debeBloquear,
+      desbloquear: _bloqueo.desbloquear,
+      onCerrarSesion: () =>
+          _cerrarSesionYVolverAlLogin(navigatorKey.currentState),
+      child: child ?? const SizedBox.shrink(),
+    );
+  }
+
   /// Pantalla inicial: restaura la sesión guardada o muestra el login.
   static Widget buildHome() {
     final restaurarSesion = RestaurarORenovarSesionUseCase(
@@ -110,10 +150,6 @@ final class AppDependencies {
     final repository = PerfilDigitalRepositoryImpl(dataSource);
     final obtenerPerfil = ObtenerPerfilDigital(repository);
     final viewModel = PerfilDigitalViewModel(obtenerPerfil: obtenerPerfil);
-    final cerrarSesion = CerrarSesionUseCase(
-      repository: _loginRepository,
-      sessionStorage: _sessionStorage,
-    );
 
     return Builder(
       builder: (context) {
@@ -126,16 +162,14 @@ final class AppDependencies {
           onVerHistorial: () => Navigator.of(context).push(
             MaterialPageRoute<void>(builder: (_) => buildHistorialPage()),
           ),
-          onCerrarSesion: () async {
-            // Revoca la sesión en el backend y borra los tokens locales,
-            // aunque no haya red (ver LoginEstudianteRepositoryImpl).
-            await cerrarSesion();
-            if (!context.mounted) return;
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => buildLoginPage()),
-              (_) => false,
-            );
-          },
+          onCerrarSesion: () =>
+              _cerrarSesionYVolverAlLogin(Navigator.of(context)),
+          ajustes: AjustesBiometriaTile(
+            estaDisponible: _bloqueo.estaDisponible,
+            estaActivada: _bloqueo.estaActivada,
+            activar: _bloqueo.activar,
+            desactivar: _bloqueo.desactivar,
+          ),
         );
       },
     );

@@ -80,4 +80,13 @@ final class AppStrings {
   static const historyMore = 'Cargar más';
   static const historyAuthorized = 'Ingreso autorizado';
   static const historyDenied = 'Ingreso rechazado';
+  static const biometricsTitle = 'Desbloquear con huella o rostro';
+  static const biometricsSubtitle =
+      'Pide tu huella o rostro al abrir la app. Tu huella nunca sale del '
+      'teléfono.';
+  static const biometricsError = 'No se pudo cambiar el desbloqueo.';
+  static const lockedTitle = 'Identidad digital bloqueada';
+  static const lockedBody =
+      'Confirma con tu huella, rostro o el PIN del teléfono para continuar.';
+  static const unlock = 'Desbloquear';
 }

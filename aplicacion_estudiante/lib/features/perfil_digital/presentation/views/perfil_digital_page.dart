@@ -13,6 +13,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.onVerCodigoQr,
     this.onVerAvisoPrivacidad,
     this.onVerHistorial,
+    this.ajustes,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -28,6 +29,8 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Abre el historial personal de ingresos (US-14).
   final VoidCallback? onVerHistorial;
+  /// Ajustes opcionales al final de la identidad (p. ej. biometría).
+  final Widget? ajustes;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -101,6 +104,7 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
             onReload: widget.viewModel.cargar,
             onVerCodigoQr: widget.onVerCodigoQr,
             onVerHistorial: widget.onVerHistorial,
+            ajustes: widget.ajustes,
           ),
         ),
       ),
@@ -114,12 +118,14 @@ class _StateBody extends StatelessWidget {
     required this.onReload,
     this.onVerCodigoQr,
     this.onVerHistorial,
+    this.ajustes,
   });
 
   final PerfilDigitalState state;
   final Future<void> Function() onReload;
   final VoidCallback? onVerCodigoQr;
   final VoidCallback? onVerHistorial;
+  final Widget? ajustes;
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +140,7 @@ class _StateBody extends StatelessWidget {
         perfil: perfil,
         onVerCodigoQr: onVerCodigoQr,
         onVerHistorial: onVerHistorial,
+        ajustes: ajustes,
       ),
       PerfilDigitalEmpty() => _EmptyState(onRetry: onReload),
       PerfilDigitalError(:final message, :final retry) => _ErrorState(
@@ -149,11 +156,13 @@ class _ProfileCard extends StatelessWidget {
     required this.perfil,
     this.onVerCodigoQr,
     this.onVerHistorial,
+    this.ajustes,
   });
 
   final PerfilDigital perfil;
   final VoidCallback? onVerCodigoQr;
   final VoidCallback? onVerHistorial;
+  final Widget? ajustes;
 
   @override
   Widget build(BuildContext context) {
@@ -217,6 +226,7 @@ class _ProfileCard extends StatelessWidget {
             label: const Text(AppStrings.historyTitle),
           ),
         ],
+        if (ajustes != null) ...[const SizedBox(height: 24), ajustes!],
       ],
     );
   }
