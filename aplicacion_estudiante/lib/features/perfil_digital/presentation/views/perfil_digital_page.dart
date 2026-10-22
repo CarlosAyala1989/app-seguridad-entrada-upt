@@ -12,6 +12,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.onCerrarSesion,
     this.onVerCodigoQr,
     this.onVerAvisoPrivacidad,
+    this.onVerHistorial,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -24,6 +25,9 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Abre el aviso de privacidad; si es `null` no se muestra el botón.
   final VoidCallback? onVerAvisoPrivacidad;
+
+  /// Abre el historial personal de ingresos (US-14).
+  final VoidCallback? onVerHistorial;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -96,6 +100,7 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
             state: snapshot.data ?? const PerfilDigitalLoading(),
             onReload: widget.viewModel.cargar,
             onVerCodigoQr: widget.onVerCodigoQr,
+            onVerHistorial: widget.onVerHistorial,
           ),
         ),
       ),
@@ -108,11 +113,13 @@ class _StateBody extends StatelessWidget {
     required this.state,
     required this.onReload,
     this.onVerCodigoQr,
+    this.onVerHistorial,
   });
 
   final PerfilDigitalState state;
   final Future<void> Function() onReload;
   final VoidCallback? onVerCodigoQr;
+  final VoidCallback? onVerHistorial;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +133,7 @@ class _StateBody extends StatelessWidget {
       PerfilDigitalData(:final perfil) => _ProfileCard(
         perfil: perfil,
         onVerCodigoQr: onVerCodigoQr,
+        onVerHistorial: onVerHistorial,
       ),
       PerfilDigitalEmpty() => _EmptyState(onRetry: onReload),
       PerfilDigitalError(:final message, :final retry) => _ErrorState(
@@ -137,10 +145,15 @@ class _StateBody extends StatelessWidget {
 }
 
 class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.perfil, this.onVerCodigoQr});
+  const _ProfileCard({
+    required this.perfil,
+    this.onVerCodigoQr,
+    this.onVerHistorial,
+  });
 
   final PerfilDigital perfil;
   final VoidCallback? onVerCodigoQr;
+  final VoidCallback? onVerHistorial;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +208,14 @@ class _ProfileCard extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ),
+        ],
+        if (onVerHistorial != null) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onVerHistorial,
+            icon: const Icon(Icons.history),
+            label: const Text(AppStrings.historyTitle),
+          ),
         ],
       ],
     );
