@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../busqueda/presentation/screens/busqueda_usuario_screen.dart';
 import '../../../validacion/data/models/resultado_validacion_model.dart';
 import '../../../validacion/presentation/screens/resultado_validacion_screen.dart';
 import '../controllers/auth_controller.dart';
@@ -318,6 +319,33 @@ class HomeGuardiaScreen extends StatelessWidget {
                               builder: (_) => ResultadoValidacionScreen(
                                 resultado: mockDenegado,
                               ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Botón para Búsqueda Manual de Usuario (US-16)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF38BDF8)),
+                          foregroundColor: const Color(0xFF38BDF8),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.person_search, size: 20),
+                        label: const Text(
+                          'Búsqueda Manual de Usuario (US-16)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const BusquedaUsuarioScreen(),
                             ),
                           );
                         },
