@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../administracion/presentation/screens/gestion_usuarios_screen.dart';
 import '../../../busqueda/presentation/screens/busqueda_usuario_screen.dart';
 import '../../../validacion/data/models/resultado_validacion_model.dart';
 import '../../../validacion/presentation/screens/resultado_validacion_screen.dart';
@@ -234,7 +235,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Valida credenciales QR institucionales y visualiza el resultado de acceso en tiempo real (US-09).',
+                      'Valida credenciales QR institucionales y visualiza el resultado de acceso en tiempo real.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
@@ -257,7 +258,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.check_circle_outline, size: 20),
                         label: const Text(
-                          'Validar Acceso (Simular Autorizado)',
+                          'Validar Acceso (Ejemplo Autorizado)',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         onPressed: () {
@@ -301,7 +302,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.cancel_outlined, size: 20),
                         label: const Text(
-                          'Validar Acceso (Simular Denegado)',
+                          'Validar Acceso (Ejemplo Denegado)',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         onPressed: () {
@@ -312,7 +313,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                             registradoEn: DateTime.now(),
                             puntoAccesoCodigo: 'PUERTA-PRINCIPAL',
                             puntoAccesoNombre: 'Puerta Principal - Campus Capanique',
-                            identidad: null, // Por DoD de privacidad, denegado omite identidad
+                            identidad: null,
                           );
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -325,7 +326,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // Botón para Búsqueda Manual de Usuario (US-16)
+                    // Botón para Búsqueda Manual de Usuario
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -339,13 +340,40 @@ class HomeGuardiaScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.person_search, size: 20),
                         label: const Text(
-                          'Búsqueda Manual de Usuario (US-16)',
+                          'Búsqueda Manual de Usuario',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const BusquedaUsuarioScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Botón para Gestión de Personal (Guardias y Admins)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFA855F7)),
+                          foregroundColor: const Color(0xFFA855F7),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.manage_accounts, size: 20),
+                        label: const Text(
+                          'Gestión de Personal (Guardias y Admins)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const GestionUsuariosScreen(),
                             ),
                           );
                         },
@@ -376,7 +404,7 @@ class HomeGuardiaScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Botón de demostración para el docente: Simula la captura reactiva de HTTP 401 (Ítem 3)
+              // Botón para comprobar caducidad reactiva de sesión (Error 401)
               TextButton.icon(
                 onPressed: () {
                   authController.forzarCierreSesionPor401();
@@ -384,7 +412,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                 icon: const Icon(Icons.warning_amber_rounded,
                     color: Color(0xFFFBBF24), size: 18),
                 label: const Text(
-                  'Simular error HTTP 401 (Demostración Ítem 3)',
+                  'Comprobar caducidad de sesión (Error 401)',
                   style: TextStyle(color: Color(0xFFFBBF24), fontSize: 12),
                 ),
               ),
