@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../administracion/presentation/screens/gestion_usuarios_screen.dart';
 import '../../../busqueda/presentation/screens/busqueda_usuario_screen.dart';
+import '../../../historial/presentation/screens/historial_validaciones_screen.dart';
 import '../../../validacion/data/models/resultado_validacion_model.dart';
 import '../../../validacion/presentation/screens/resultado_validacion_screen.dart';
 import '../controllers/auth_controller.dart';
@@ -374,6 +375,33 @@ class HomeGuardiaScreen extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const GestionUsuariosScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Botón para Historial de Accesos Recientes
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF10B981)),
+                          foregroundColor: const Color(0xFF10B981),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.history_rounded, size: 20),
+                        label: const Text(
+                          'Historial de Accesos Recientes',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const HistorialValidacionesScreen(),
                             ),
                           );
                         },
