@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../administracion/presentation/screens/gestion_usuarios_screen.dart';
 import '../../../busqueda/presentation/screens/busqueda_usuario_screen.dart';
 import '../../../historial/presentation/screens/historial_validaciones_screen.dart';
-import '../../../validacion/data/models/resultado_validacion_model.dart';
-import '../../../validacion/presentation/screens/resultado_validacion_screen.dart';
 import '../controllers/auth_controller.dart';
 
 class HomeGuardiaScreen extends StatelessWidget {
@@ -245,88 +243,6 @@ class HomeGuardiaScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Botón para resultado AUTORIZADO
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF16A34A), // Verde
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(Icons.check_circle_outline, size: 20),
-                        label: const Text(
-                          'Validar Acceso (Ejemplo Autorizado)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                        onPressed: () {
-                          final mockAutorizado = ResultadoValidacionModel(
-                            resultado: 'AUTORIZADO',
-                            motivo: 'ACCESO_AUTORIZADO',
-                            mensaje: 'Ingreso autorizado.',
-                            registradoEn: DateTime.now(),
-                            puntoAccesoCodigo: 'PUERTA-PRINCIPAL',
-                            puntoAccesoNombre: 'Puerta Principal - Campus Capanique',
-                            identidad: const IdentidadEstudianteModel(
-                              nombreCompleto: 'María Elena Pérez Quispe',
-                              codigoInstitucional: '2023071234',
-                              escuela: 'Ingeniería de Sistemas',
-                              estadoAcademico: 'REGULAR',
-                              tiposUsuario: ['ESTUDIANTE'],
-                            ),
-                          );
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ResultadoValidacionScreen(
-                                resultado: mockAutorizado,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Botón para resultado DENEGADO
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFEF4444)),
-                          foregroundColor: const Color(0xFFF87171),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(Icons.cancel_outlined, size: 20),
-                        label: const Text(
-                          'Validar Acceso (Ejemplo Denegado)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        onPressed: () {
-                          final mockDenegado = ResultadoValidacionModel(
-                            resultado: 'DENEGADO',
-                            motivo: 'CREDENCIAL_YA_UTILIZADA',
-                            mensaje: 'El código QR ya fue utilizado anteriormente.',
-                            registradoEn: DateTime.now(),
-                            puntoAccesoCodigo: 'PUERTA-PRINCIPAL',
-                            puntoAccesoNombre: 'Puerta Principal - Campus Capanique',
-                            identidad: null,
-                          );
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ResultadoValidacionScreen(
-                                resultado: mockDenegado,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     // Botón para Búsqueda Manual de Usuario
                     SizedBox(
                       width: double.infinity,
@@ -334,7 +250,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF38BDF8)),
                           foregroundColor: const Color(0xFF38BDF8),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -342,7 +258,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                         icon: const Icon(Icons.person_search, size: 20),
                         label: const Text(
                           'Búsqueda Manual de Usuario',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         onPressed: () {
                           Navigator.of(context).push(
@@ -353,34 +269,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                         },
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    // Botón para Gestión de Personal (Guardias y Admins)
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFA855F7)),
-                          foregroundColor: const Color(0xFFA855F7),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(Icons.manage_accounts, size: 20),
-                        label: const Text(
-                          'Gestión de Personal (Guardias y Admins)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const GestionUsuariosScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     // Botón para Historial de Accesos Recientes
                     SizedBox(
                       width: double.infinity,
@@ -388,7 +277,7 @@ class HomeGuardiaScreen extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF10B981)),
                           foregroundColor: const Color(0xFF10B981),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -396,12 +285,39 @@ class HomeGuardiaScreen extends StatelessWidget {
                         icon: const Icon(Icons.history_rounded, size: 20),
                         label: const Text(
                           'Historial de Accesos Recientes',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const HistorialValidacionesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Botón para Gestión de Guardias de Seguridad
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFA855F7)),
+                          foregroundColor: const Color(0xFFA855F7),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(Icons.shield_outlined, size: 20),
+                        label: const Text(
+                          'Gestión de Guardias de Seguridad',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const GestionUsuariosScreen(),
                             ),
                           );
                         },
