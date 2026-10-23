@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../administracion/presentation/screens/gestion_usuarios_screen.dart';
 import '../../../busqueda/presentation/screens/busqueda_usuario_screen.dart';
 import '../../../historial/presentation/screens/historial_validaciones_screen.dart';
+import '../../domain/role_policy.dart';
 import '../controllers/auth_controller.dart';
 
 class HomeGuardiaScreen extends StatelessWidget {
@@ -51,6 +52,7 @@ class HomeGuardiaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final usuario = authController.usuario;
     final sesion = authController.sesion;
+    final esAdmin = RolePolicy.esAdministrador(usuario?.roles ?? []);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -296,33 +298,35 @@ class HomeGuardiaScreen extends StatelessWidget {
                         },
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    // Botón para Gestión de Guardias de Seguridad
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFA855F7)),
-                          foregroundColor: const Color(0xFFA855F7),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: const Icon(Icons.shield_outlined, size: 20),
-                        label: const Text(
-                          'Gestión de Guardias de Seguridad',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const GestionUsuariosScreen(),
+                    if (esAdmin) ...[
+                      const SizedBox(height: 12),
+                      // Botón para Gestión de Guardias de Seguridad (Exclusivo para ADMINISTRADOR)
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFA855F7)),
+                            foregroundColor: const Color(0xFFA855F7),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          );
-                        },
+                          ),
+                          icon: const Icon(Icons.shield_outlined, size: 20),
+                          label: const Text(
+                            'Gestión de Guardias de Seguridad',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const GestionUsuariosScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -343,21 +347,6 @@ class HomeGuardiaScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Botón para comprobar caducidad reactiva de sesión (Error 401)
-              TextButton.icon(
-                onPressed: () {
-                  authController.forzarCierreSesionPor401();
-                },
-                icon: const Icon(Icons.warning_amber_rounded,
-                    color: Color(0xFFFBBF24), size: 18),
-                label: const Text(
-                  'Comprobar caducidad de sesión (Error 401)',
-                  style: TextStyle(color: Color(0xFFFBBF24), fontSize: 12),
                 ),
               ),
             ],
