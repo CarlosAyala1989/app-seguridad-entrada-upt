@@ -22,12 +22,16 @@ final class VerificacionIntranet {
     required this.nombreApellidos,
     required this.verificacionIntranetId,
     required this.verificacionExpiraEn,
+    this.escuelaProfesional,
   });
 
   final String codigo;
   final String nombreApellidos;
   final String verificacionIntranetId;
   final DateTime verificacionExpiraEn;
+
+  /// Escuela que muestra la intranet, o `null` si no se pudo obtener.
+  final String? escuelaProfesional;
 }
 
 /// Datos devueltos al iniciar el proceso OAuth con Google Workspace.

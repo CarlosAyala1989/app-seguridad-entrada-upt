@@ -138,6 +138,7 @@ final class LoginViewModel {
           expiraEn: autorizacion.expiraEn,
           codigo: verificacion.codigo,
           nombreApellidos: verificacion.nombreApellidos,
+          escuelaProfesional: verificacion.escuelaProfesional,
         ),
       );
     } on Failure catch (e) {

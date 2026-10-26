@@ -66,6 +66,7 @@ final class LoginGooglePreparadoState extends LoginState {
     required this.expiraEn,
     this.codigo,
     this.nombreApellidos,
+    this.escuelaProfesional,
   });
 
   final String transaccionId;
@@ -76,4 +77,5 @@ final class LoginGooglePreparadoState extends LoginState {
   /// estudiante con qué identidad va a continuar.
   final String? codigo;
   final String? nombreApellidos;
+  final String? escuelaProfesional;
 }

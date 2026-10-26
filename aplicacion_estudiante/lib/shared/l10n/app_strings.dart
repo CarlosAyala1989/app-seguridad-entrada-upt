@@ -32,6 +32,12 @@ final class AppStrings {
   static const loginStep2Title = 'Autenticación en dos pasos';
   static const loginStep2Subtitle = 'Cuenta institucional @virtual.upt.pe';
   static const loginStep2 = 'Correo institucional';
+  static const loginIntranetVerified = 'Identidad de intranet verificada';
+  static const loginFullName = 'Nombre completo';
+  static const loginInstitutionalCode = 'Código institucional';
+  static const loginSchool = 'Escuela profesional';
+  static const loginNotInIntranet = 'No disponible en la intranet';
+  static const loginContinueGoogle = 'Continuar con Google institucional';
   static const loginDeviceNotice =
       'Por seguridad, no inicies sesión en dispositivos compartidos o de '
       'uso público.';
@@ -118,7 +124,8 @@ final class AppStrings {
   static const historyAll = 'Todos';
   static const historyEntries = 'Ingresos';
   static const historyRejections = 'Rechazos';
-  static const historyEmpty = 'Todavía no hay ingresos ni rechazos registrados.';
+  static const historyEmpty =
+      'Todavía no hay ingresos ni rechazos registrados.';
   static const historyMore = 'Cargar más';
   static const historyAuthorized = 'Ingreso autorizado';
   static const historyDenied = 'Ingreso rechazado';
