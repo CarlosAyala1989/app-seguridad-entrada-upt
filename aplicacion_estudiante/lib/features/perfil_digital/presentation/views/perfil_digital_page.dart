@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
 import '../../domain/entities/perfil_digital.dart';
 import '../states/perfil_digital_state.dart';
 import '../viewmodels/perfil_digital_view_model.dart';
+import '../widgets/carne_digital_card.dart';
 
 class PerfilDigitalPage extends StatefulWidget {
   const PerfilDigitalPage({
@@ -88,6 +90,7 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.profileTitle),
+        centerTitle: false,
         actions: [
           if (widget.accionExtra != null) widget.accionExtra!,
           if (widget.onVerAvisoPrivacidad != null)
@@ -186,68 +189,46 @@ class _ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        CircleAvatar(
-          radius: 48,
-          backgroundImage:
-              (perfil.fotoUrl != null && perfil.fotoUrl!.isNotEmpty)
-              ? NetworkImage(perfil.fotoUrl!)
-              : null,
-          child: (perfil.fotoUrl == null || perfil.fotoUrl!.isEmpty)
-              ? Text(
-                  perfil.nombreCompleto.isEmpty
-                      ? '?'
-                      : perfil.nombreCompleto[0],
-                  style: Theme.of(context).textTheme.headlineLarge,
-                )
-              : null,
-        ),
-        const SizedBox(height: 20),
-        Text(
-          perfil.nombreCompleto,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 24),
-        _ProfileRow(label: AppStrings.code, value: perfil.codigoInstitucional),
-        _ProfileRow(label: AppStrings.email, value: perfil.correoInstitucional),
-        _ProfileRow(label: AppStrings.role, value: perfil.rol),
-        _ProfileRow(label: AppStrings.school, value: perfil.escuela),
-        _ProfileRow(
-          label: AppStrings.identity,
-          value: perfil.estadoVerificacion,
-        ),
-        _ProfileRow(label: AppStrings.access, value: perfil.estadoAcceso),
-        const SizedBox(height: 16),
-        EstadoIngresoCard(perfil: perfil),
-        if (onVerCodigoQr != null) ...[
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: perfil.puedeSolicitarCodigoQr ? onVerCodigoQr : null,
-            icon: const Icon(Icons.qr_code_2),
-            label: const Text(AppStrings.showQr),
-          ),
-          if (!perfil.puedeSolicitarCodigoQr)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                AppStrings.qrNotAvailable,
-                textAlign: TextAlign.center,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            CarneDigitalCard(perfil: perfil),
+            const SizedBox(height: 16),
+            EstadoIngresoCard(perfil: perfil),
+            if (onVerCodigoQr != null) ...[
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: perfil.puedeSolicitarCodigoQr ? onVerCodigoQr : null,
+                icon: const Icon(Icons.qr_code_2),
+                label: const Text(AppStrings.showQr),
               ),
-            ),
-        ],
-        if (onVerHistorial != null) ...[
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onVerHistorial,
-            icon: const Icon(Icons.history),
-            label: const Text(AppStrings.historyTitle),
-          ),
-        ],
-        if (ajustes != null) ...[const SizedBox(height: 24), ajustes!],
-      ],
+              if (!perfil.puedeSolicitarCodigoQr)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    AppStrings.qrNotAvailable,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textoSecundario,
+                    ),
+                  ),
+                ),
+            ],
+            if (onVerHistorial != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onVerHistorial,
+                icon: const Icon(Icons.history),
+                label: const Text(AppStrings.historyTitle),
+              ),
+            ],
+            if (ajustes != null) ...[const SizedBox(height: 20), ajustes!],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -260,34 +241,54 @@ class EstadoIngresoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final esquema = Theme.of(context).colorScheme;
+    final textos = Theme.of(context).textTheme;
     final puede = perfil.permiteIngreso;
-    return Card(
-      color: puede ? esquema.primaryContainer : esquema.errorContainer,
-      child: ListTile(
-        leading: Icon(
-          puede ? Icons.verified_user : Icons.block,
-          color: puede ? esquema.onPrimaryContainer : esquema.onErrorContainer,
+    final colorPrincipal = puede ? AppColors.verdeAutorizado : AppColors.rojoError;
+    final colorFondo = puede ? AppColors.verdeFondo : AppColors.rojoFondo;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: puede ? AppColors.bordeSuave : AppColors.rojoError,
         ),
-        title: Text(puede ? AppStrings.canEnter : AppStrings.cannotEnter),
-        subtitle: puede
-            ? null
-            : Text('${perfil.motivoSinIngreso} ${AppStrings.contactSupport}'),
       ),
-    );
-  }
-}
-
-class _ProfileRow extends StatelessWidget {
-  const _ProfileRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(title: Text(label), subtitle: Text(value)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: colorFondo, shape: BoxShape.circle),
+            child: Icon(
+              puede ? Icons.check_circle : Icons.block,
+              color: colorPrincipal,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  puede ? AppStrings.canEnter : AppStrings.cannotEnter,
+                  style: textos.titleMedium?.copyWith(color: colorPrincipal),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  puede
+                      ? AppStrings.canEnterDetail
+                      : '${perfil.motivoSinIngreso} ${AppStrings.contactSupport}',
+                  style: textos.bodySmall?.copyWith(
+                    color: AppColors.textoSecundario,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

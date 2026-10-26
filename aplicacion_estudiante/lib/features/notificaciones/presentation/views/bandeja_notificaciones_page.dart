@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/widgets/mensaje_estado.dart';
 import '../../domain/entities/notificacion.dart';
 import '../states/bandeja_state.dart';
 import '../viewmodels/bandeja_view_model.dart';
@@ -60,6 +61,7 @@ class _BandejaNotificacionesPageState extends State<BandejaNotificacionesPage> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: [
                   ChoiceChip(
                     label: const Text(AppStrings.historyAll),
@@ -96,15 +98,18 @@ class _BandejaNotificacionesPageState extends State<BandejaNotificacionesPage> {
               BandejaCargando() => const Center(
                 child: CircularProgressIndicator(),
               ),
-              BandejaVacia() => _Mensaje(
+              BandejaVacia() => MensajeEstado(
                 icono: Icons.notifications_none,
                 texto: AppStrings.notificationsEmpty,
-                onReintentar: widget.viewModel.cargar,
+                textoBoton: AppStrings.reload,
+                onPulsar: widget.viewModel.cargar,
               ),
-              BandejaError(:final message) => _Mensaje(
+              BandejaError(:final message) => MensajeEstado(
                 icono: Icons.error_outline,
                 texto: message,
-                onReintentar: widget.viewModel.cargar,
+                textoBoton: AppStrings.reload,
+                onPulsar: widget.viewModel.cargar,
+                esError: true,
               ),
               BandejaDatos datos => RefreshIndicator(
                 onRefresh: widget.viewModel.cargar,
@@ -138,40 +143,6 @@ class _BandejaNotificacionesPageState extends State<BandejaNotificacionesPage> {
             };
           },
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Mensaje extends StatelessWidget {
-  const _Mensaje({
-    required this.icono,
-    required this.texto,
-    required this.onReintentar,
-  });
-
-  final IconData icono;
-  final String texto;
-  final Future<void> Function() onReintentar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icono, size: 64),
-            const SizedBox(height: 16),
-            Text(texto, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: () => onReintentar(),
-              child: const Text(AppStrings.reload),
             ),
           ],
         ),

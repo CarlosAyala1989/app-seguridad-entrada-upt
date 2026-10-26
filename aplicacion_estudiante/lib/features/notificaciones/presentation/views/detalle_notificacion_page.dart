@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
 import '../../domain/entities/notificacion.dart';
 import '../widgets/notificacion_tile.dart';
 
@@ -66,20 +67,52 @@ class _DetalleNotificacionPageState extends State<DetalleNotificacionPage> {
             padding: const EdgeInsets.all(24),
             children: [
               if (n.esAlerta) ...[
-                Card(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  child: const ListTile(
-                    leading: Icon(Icons.gpp_maybe),
-                    title: Text(AppStrings.securityAlert),
-                    subtitle: Text(AppStrings.securityAlertHelp),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.rojoFondo,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(color: AppColors.rojoError),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.gpp_maybe, color: AppColors.rojoError),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.securityAlert,
+                              style: textos.titleSmall?.copyWith(
+                                color: AppColors.rojoTexto,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppStrings.securityAlertHelp,
+                              style: textos.bodySmall?.copyWith(
+                                color: AppColors.rojoTexto,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ],
-              Text(n.titulo, style: textos.titleLarge),
-              const SizedBox(height: 12),
-              Text(n.mensaje),
-              const SizedBox(height: 24),
+              Text(n.titulo, style: textos.headlineMedium),
+              const SizedBox(height: 8),
+              Text(
+                n.mensaje,
+                style: textos.bodyLarge?.copyWith(
+                  color: AppColors.textoSecundario,
+                ),
+              ),
+              const SizedBox(height: 20),
               _Dato(
                 icono: Icons.info_outline,
                 titulo: AppStrings.notificationCause,
@@ -117,11 +150,43 @@ class _Dato extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icono),
-        title: Text(titulo),
-        subtitle: Text(valor),
+    final textos = Theme.of(context).textTheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.bordeSuave),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.superficieBaja,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icono, size: 20, color: AppColors.azulUpt),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: textos.labelMedium?.copyWith(
+                    color: AppColors.textoSecundario,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(valor, style: textos.bodyMedium),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/logo_upt.dart';
 import '../../domain/entities/usuario.dart';
 
 /// Primera pantalla de la app: intenta restaurar la sesión guardada y decide
@@ -65,13 +67,18 @@ class _PantallaPreparacion extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.shield_outlined, size: 56),
-            const SizedBox(height: 16),
-            const CircularProgressIndicator(),
+            const LogoUpt(alto: 110),
+            const SizedBox(height: 32),
+            const SizedBox(
+              width: 160,
+              child: LinearProgressIndicator(minHeight: 4),
+            ),
             const SizedBox(height: 16),
             Text(
               AppStrings.preparingSession,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.textoSecundario),
             ),
           ],
         ),
