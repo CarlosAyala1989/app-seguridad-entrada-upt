@@ -16,6 +16,10 @@ final class AppStrings {
   static const welcomeFooter =
       'Acceso exclusivo para la comunidad universitaria de la UPT';
   static const welcomeCampus = 'Campus Capanique · Tacna';
+  static const cardSubtitle = 'Carné universitario digital';
+  static const identityVerified = 'Identidad verificada por la UPT';
+  static const canEnterDetail =
+      'Identidad verificada, cuenta activa y acceso autorizado.';
   static const loginTitle = 'Verifica tu identidad';
   static const loginSubtitle = 'Credenciales de la intranet académica';
   static const loginStep1 = 'Credenciales UPT';
