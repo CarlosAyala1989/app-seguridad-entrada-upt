@@ -65,6 +65,17 @@ class _DetalleNotificacionPageState extends State<DetalleNotificacionPage> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
+              if (n.esAlerta) ...[
+                Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: const ListTile(
+                    leading: Icon(Icons.gpp_maybe),
+                    title: Text(AppStrings.securityAlert),
+                    subtitle: Text(AppStrings.securityAlertHelp),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Text(n.titulo, style: textos.titleLarge),
               const SizedBox(height: 12),
               Text(n.mensaje),

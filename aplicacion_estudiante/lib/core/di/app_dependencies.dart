@@ -37,6 +37,7 @@ import '../../features/notificaciones/presentation/controllers/resumen_notificac
 import '../../features/notificaciones/presentation/viewmodels/bandeja_view_model.dart';
 import '../../features/notificaciones/presentation/views/bandeja_notificaciones_page.dart';
 import '../../features/notificaciones/presentation/views/detalle_notificacion_page.dart';
+import '../../features/notificaciones/presentation/widgets/alerta_seguridad_banner.dart';
 import '../../features/notificaciones/presentation/widgets/campana_notificaciones.dart';
 import '../../features/perfil_digital/data/datasources/perfil_digital_remote_data_source.dart';
 import '../../features/perfil_digital/data/repositories/perfil_digital_repository_impl.dart';
@@ -159,6 +160,12 @@ final class AppDependencies {
     final repository = PerfilDigitalRepositoryImpl(dataSource);
     final obtenerPerfil = ObtenerPerfilDigital(repository);
     final viewModel = PerfilDigitalViewModel(obtenerPerfil: obtenerPerfil);
+    // Un solo controlador de avisos para la campana y la alerta destacada;
+    // lo descarta la campana al salir de la pantalla.
+    final avisos = ResumenNotificacionesController(
+      consultarResumen: ConsultarResumenNotificacionesUseCase(_notificaciones),
+      obtenerNotificaciones: ObtenerNotificacionesUseCase(_notificaciones),
+    );
 
     return Builder(
       builder: (context) {
@@ -174,15 +181,15 @@ final class AppDependencies {
           onCerrarSesion: () =>
               _cerrarSesionYVolverAlLogin(Navigator.of(context)),
           accionExtra: CampanaNotificaciones(
-            controller: ResumenNotificacionesController(
-              consultarResumen: ConsultarResumenNotificacionesUseCase(
-                _notificaciones,
-              ),
-              obtenerNotificaciones: ObtenerNotificacionesUseCase(
-                _notificaciones,
-              ),
-            ),
+            controller: avisos,
             onAbrirBandeja: () => abrirBandejaNotificaciones(context),
+          ),
+          encabezado: AlertaSeguridadBanner(
+            controller: avisos,
+            onRevisar: () => abrirBandejaNotificaciones(
+              context,
+              filtro: TipoNotificacion.intentoSospechoso,
+            ),
           ),
           ajustes: AjustesBiometriaTile(
             estaDisponible: _bloqueo.estaDisponible,

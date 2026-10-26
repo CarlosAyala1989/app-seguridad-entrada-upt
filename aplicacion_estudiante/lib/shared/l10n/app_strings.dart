@@ -99,4 +99,16 @@ final class AppStrings {
   static const notificationWhen = 'Fecha y hora del intento';
   static const notificationSupport = 'A quién acudir';
   static const see = 'Ver';
+  static const notificationsDenials = 'Denegaciones';
+  static const notificationsAlerts = 'Alertas';
+  static const securityAlert = 'Alerta de seguridad';
+  static const securityAlertHelp =
+      'Detectamos una señal de posible uso sospechoso de tu credencial. No '
+      'prueba un ataque, pero si no reconoces este intento, acude al canal de '
+      'soporte.';
+  static const alertsBannerOne = 'Tienes una alerta de seguridad sin leer';
+  static const alertsBannerManyPrefix = 'Tienes';
+  static const alertsBannerManySuffix = 'alertas de seguridad sin leer';
+  static const alertsBannerHelp = 'Revisa si reconoces el intento de ingreso.';
+  static const review = 'Revisar';
 }

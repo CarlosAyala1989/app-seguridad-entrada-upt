@@ -44,7 +44,9 @@ class _CampanaNotificacionesState extends State<CampanaNotificaciones> {
     final texto = alIniciar && nuevos.length > 1
         ? '${AppStrings.notificationsPendingPrefix} ${nuevos.length} '
               '${AppStrings.notificationsPendingSuffix}'
-        : nuevos.first.titulo;
+        : nuevos
+              .firstWhere((n) => n.esAlerta, orElse: () => nuevos.first)
+              .titulo;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
