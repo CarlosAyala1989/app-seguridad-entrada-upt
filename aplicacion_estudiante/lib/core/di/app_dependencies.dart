@@ -27,6 +27,7 @@ import '../../features/login_estudiante/domain/usecases/obtener_captcha_use_case
 import '../../features/login_estudiante/domain/usecases/restaurar_o_renovar_sesion_use_case.dart';
 import '../../features/login_estudiante/domain/usecases/verificar_intranet_use_case.dart';
 import '../../features/login_estudiante/presentation/viewmodels/login_view_model.dart';
+import '../../features/login_estudiante/presentation/views/bienvenida_page.dart';
 import '../../features/login_estudiante/presentation/views/login_page.dart';
 import '../../features/login_estudiante/presentation/views/sesion_gate.dart';
 import '../../features/notificaciones/data/datasources/notificaciones_remote_data_source.dart';
@@ -92,14 +93,14 @@ final class AppDependencies {
   );
 
   /// Revoca la sesión en el backend, borra los tokens locales (aunque no haya
-  /// red) y deja solo el login en la pila de pantallas.
+  /// red) y deja solo la bienvenida en la pila de pantallas.
   static Future<void> _cerrarSesionYVolverAlLogin(NavigatorState? nav) async {
     await CerrarSesionUseCase(
       repository: _loginRepository,
       sessionStorage: _sessionStorage,
     )();
     nav?.pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => buildLoginPage()),
+      MaterialPageRoute<void>(builder: (_) => buildBienvenidaPage()),
       (_) => false,
     );
   }
@@ -123,8 +124,21 @@ final class AppDependencies {
     );
     return SesionGate(
       restaurarSesion: restaurarSesion.call,
-      construirLogin: (_) => buildLoginPage(),
+      construirLogin: (_) => buildBienvenidaPage(),
       construirInicio: (_) => buildPerfilDigitalPage(),
+    );
+  }
+
+  /// Bienvenida institucional: desde aquí se abre el login o el aviso de
+  /// privacidad.
+  static Widget buildBienvenidaPage() {
+    return Builder(
+      builder: (context) => BienvenidaPage(
+        onIniciarSesion: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => buildLoginPage()),
+        ),
+        onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+      ),
     );
   }
 
@@ -143,8 +157,13 @@ final class AppDependencies {
         return LoginPage(
           viewModel: loginViewModel,
           onLoginExitoso: (usuario) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => buildPerfilDigitalPage()),
+            // La bienvenida y el login salen de la pila: con "atrás" no se
+            // vuelve a ellos.
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute<void>(
+                builder: (_) => buildPerfilDigitalPage(),
+              ),
+              (_) => false,
             );
           },
         );

@@ -5,6 +5,17 @@ final class AppStrings {
   static const profileTitle = 'Identidad digital UPT';
   static const loadingProfile = 'Cargando perfil digital';
   static const preparingSession = 'Preparando una sesión segura…';
+  static const universityName = 'Universidad Privada de Tacna';
+  static const welcomeBadge = 'Control de ingreso al campus';
+  static const welcomeTitle = 'Identidad Digital UPT';
+  static const welcomeBody =
+      'Tu carné universitario y tu código QR de ingreso al campus, '
+      'en un solo lugar.';
+  static const welcomeLogin = 'Iniciar sesión';
+  static const welcomePrivacy = 'Aviso de privacidad';
+  static const welcomeFooter =
+      'Acceso exclusivo para la comunidad universitaria de la UPT';
+  static const welcomeCampus = 'Campus Capanique · Tacna';
   static const logout = 'Cerrar sesión';
   static const logoutConfirmTitle = '¿Cerrar sesión?';
   static const logoutConfirmBody =
