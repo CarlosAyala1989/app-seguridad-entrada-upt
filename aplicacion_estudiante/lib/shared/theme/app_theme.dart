@@ -180,9 +180,22 @@ final class AppTheme {
           borderSide: const BorderSide(color: AppColors.azulUpt, width: 2),
         ),
       ),
+      // Filtros (historial y avisos): el elegido va en azul con texto blanco.
       chipTheme: base.chipTheme.copyWith(
+        backgroundColor: Colors.white,
+        selectedColor: AppColors.azulUpt,
+        checkmarkColor: Colors.white,
+        side: const BorderSide(color: AppColors.bordeSuave),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: WidgetStateColor.resolveWith(
+            (estados) => estados.contains(WidgetState.selected)
+                ? Colors.white
+                : AppColors.texto,
+          ),
+        ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
       dividerTheme: const DividerThemeData(

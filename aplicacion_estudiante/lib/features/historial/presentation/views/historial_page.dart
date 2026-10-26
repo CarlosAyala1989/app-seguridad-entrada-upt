@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/mensaje_estado.dart';
+import '../../../../shared/widgets/tarjeta_evento.dart';
 import '../../domain/entities/registro_historial.dart';
 import '../states/historial_state.dart';
 import '../viewmodels/historial_view_model.dart';
@@ -45,6 +48,7 @@ class _HistorialPageState extends State<HistorialPage> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: [
                   ChoiceChip(
                     label: const Text(AppStrings.historyAll),
@@ -74,15 +78,18 @@ class _HistorialPageState extends State<HistorialPage> {
                     HistorialCargando() => const Center(
                       child: CircularProgressIndicator(),
                     ),
-                    HistorialVacio() => _Mensaje(
+                    HistorialVacio() => MensajeEstado(
                       icono: Icons.history,
                       texto: AppStrings.historyEmpty,
-                      onReintentar: widget.viewModel.cargar,
+                      textoBoton: AppStrings.reload,
+                      onPulsar: widget.viewModel.cargar,
                     ),
-                    HistorialError(:final message) => _Mensaje(
+                    HistorialError(:final message) => MensajeEstado(
                       icono: Icons.error_outline,
                       texto: message,
-                      onReintentar: widget.viewModel.cargar,
+                      textoBoton: AppStrings.reload,
+                      onPulsar: widget.viewModel.cargar,
+                      esError: true,
                     ),
                     HistorialDatos datos => _Lista(
                       estado: datos,
@@ -151,21 +158,14 @@ class RegistroTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final esquema = Theme.of(context).colorScheme;
     final ok = registro.esAutorizado;
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          ok ? Icons.check_circle : Icons.cancel,
-          color: ok ? esquema.primary : esquema.error,
-        ),
-        title: Text(ok ? AppStrings.historyAuthorized : AppStrings.historyDenied),
-        subtitle: Text(
-          '${registro.puntoAccesoNombre} · ${fechaLocal(registro.registradoEn)}'
-          '${ok ? '' : '\n${registro.motivoLegible}'}',
-        ),
-        isThreeLine: !ok,
-      ),
+    return TarjetaEvento(
+      icono: ok ? Icons.check_circle_outline : Icons.highlight_off,
+      color: ok ? AppColors.verdeAutorizado : AppColors.rojoError,
+      titulo: registro.puntoAccesoNombre,
+      subtitulo: fechaLocal(registro.registradoEn),
+      detalle: ok ? null : registro.motivoLegible,
+      pie: ok ? AppStrings.historyAuthorized : AppStrings.historyDenied,
     );
   }
 
@@ -175,39 +175,5 @@ class RegistroTile extends StatelessWidget {
     String dos(int n) => n.toString().padLeft(2, '0');
     return '${dos(l.day)}/${dos(l.month)}/${l.year} '
         '${dos(l.hour)}:${dos(l.minute)}';
-  }
-}
-
-class _Mensaje extends StatelessWidget {
-  const _Mensaje({
-    required this.icono,
-    required this.texto,
-    required this.onReintentar,
-  });
-
-  final IconData icono;
-  final String texto;
-  final Future<void> Function() onReintentar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icono, size: 64),
-            const SizedBox(height: 16),
-            Text(texto, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              onPressed: () => onReintentar(),
-              child: const Text(AppStrings.reload),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

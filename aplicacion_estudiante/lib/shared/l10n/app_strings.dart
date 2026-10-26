@@ -143,6 +143,7 @@ final class AppStrings {
   static const see = 'Ver';
   static const notificationsDenials = 'Denegaciones';
   static const notificationsAlerts = 'Alertas';
+  static const accessDenied = 'Acceso denegado';
   static const securityAlert = 'Alerta de seguridad';
   static const securityAlertHelp =
       'Detectamos una señal de posible uso sospechoso de tu credencial. No '

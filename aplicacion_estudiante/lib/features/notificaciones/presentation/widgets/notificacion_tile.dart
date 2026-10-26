@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/tarjeta_evento.dart';
 import '../../domain/entities/notificacion.dart';
 
 /// dd/mm/aaaa hh:mm en la hora del teléfono (la API envía UTC).
@@ -24,32 +26,19 @@ class NotificacionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final esquema = Theme.of(context).colorScheme;
     final n = notificacion;
-    return Card(
-      // Las alertas de posible uso sospechoso (US-21) se distinguen a simple
-      // vista de las denegaciones normales.
-      color: n.esAlerta ? esquema.errorContainer : null,
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(
-          n.esAlerta ? Icons.gpp_maybe : Icons.block,
-          color: esquema.error,
-        ),
-        title: Text(
-          n.titulo,
-          style: TextStyle(
-            fontWeight: n.leida ? FontWeight.normal : FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(
-          '${n.esAlerta ? '${AppStrings.securityAlert} · ' : ''}'
-          '${n.puntoAccesoNombre} · ${fechaHoraLocal(n.registradoEn)}',
-        ),
-        trailing: n.leida
-            ? null
-            : Icon(Icons.circle, size: 10, color: esquema.primary),
-      ),
+    // Las alertas de posible uso sospechoso (US-21) se distinguen a simple
+    // vista de las denegaciones normales.
+    return TarjetaEvento(
+      icono: n.esAlerta ? Icons.gpp_maybe : Icons.block,
+      color: AppColors.rojoError,
+      etiqueta: n.esAlerta ? AppStrings.securityAlert : AppStrings.accessDenied,
+      titulo: n.titulo,
+      subtitulo: '${n.puntoAccesoNombre} · ${fechaHoraLocal(n.registradoEn)}',
+      negrita: !n.leida,
+      destacada: n.esAlerta,
+      marcaNoLeido: !n.leida,
+      onTap: onTap,
     );
   }
 }
