@@ -16,6 +16,22 @@ final class AppStrings {
   static const welcomeFooter =
       'Acceso exclusivo para la comunidad universitaria de la UPT';
   static const welcomeCampus = 'Campus Capanique · Tacna';
+  static const loginTitle = 'Verifica tu identidad';
+  static const loginSubtitle = 'Credenciales de la intranet académica';
+  static const loginStep1 = 'Credenciales UPT';
+  static const loginCodeLabel = 'Código universitario';
+  static const loginPasswordLabel = 'Contraseña de la intranet';
+  static const loginCaptchaTitle = 'Control de seguridad';
+  static const loginVerify = 'Verificar';
+  static const loginFooter =
+      'Tus credenciales se validan directamente con la intranet de la UPT';
+  static const loginStep2Title = 'Autenticación en dos pasos';
+  static const loginStep2Subtitle = 'Cuenta institucional @virtual.upt.pe';
+  static const loginStep2 = 'Correo institucional';
+  static const loginDeviceNotice =
+      'Por seguridad, no inicies sesión en dispositivos compartidos o de '
+      'uso público.';
+  static const loginBackToStep1 = 'Regresar al paso anterior';
   static const logout = 'Cerrar sesión';
   static const logoutConfirmTitle = '¿Cerrar sesión?';
   static const logoutConfirmBody =

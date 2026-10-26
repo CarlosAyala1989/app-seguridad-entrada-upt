@@ -64,9 +64,16 @@ final class LoginGooglePreparadoState extends LoginState {
     required this.transaccionId,
     required this.urlAutorizacion,
     required this.expiraEn,
+    this.codigo,
+    this.nombreApellidos,
   });
 
   final String transaccionId;
   final Uri urlAutorizacion;
   final DateTime expiraEn;
+
+  /// Datos que devolvió la intranet en el paso 1, para mostrarle al
+  /// estudiante con qué identidad va a continuar.
+  final String? codigo;
+  final String? nombreApellidos;
 }

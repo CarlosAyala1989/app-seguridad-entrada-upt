@@ -76,6 +76,9 @@ void main() {
     expect(estado.transaccionId, autorizacion.transaccionId);
     expect(estado.urlAutorizacion, autorizacion.urlAutorizacion);
     expect(estado.expiraEn, autorizacion.expiraEn);
+    // El paso 2 muestra con qué identidad se continúa.
+    expect(estado.codigo, verificacion.codigo);
+    expect(estado.nombreApellidos, verificacion.nombreApellidos);
 
     verify(
       () => repository.verificarIntranet(
