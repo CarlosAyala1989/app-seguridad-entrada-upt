@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../../core/auth/secure_session_storage.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/flujo_login.dart';
@@ -95,6 +97,7 @@ final class LoginEstudianteRepositoryImpl implements LoginEstudianteRepository {
           tokenAccesoExpiraEn: sesion.tokenAccesoExpiraEn,
           tokenRenovacionExpiraEn: sesion.tokenRenovacionExpiraEn,
         );
+        await _guardarUsuario(sesion.usuario);
       }
 
       return resultado;
@@ -124,9 +127,13 @@ final class LoginEstudianteRepositoryImpl implements LoginEstudianteRepository {
         tokenAccesoExpiraEn: sesion.tokenAccesoExpiraEn,
         tokenRenovacionExpiraEn: sesion.tokenRenovacionExpiraEn,
       );
+      await _guardarUsuario(sesion.usuario);
 
       return sesion;
     } on LoginFailure {
+      rethrow;
+    } on NetworkFailure {
+      // Sin internet no se borra nada: la sesión sigue guardada.
       rethrow;
     } on UnauthorizedFailure catch (e) {
       await _sessionStorage.limpiar();
@@ -142,7 +149,11 @@ final class LoginEstudianteRepositoryImpl implements LoginEstudianteRepository {
   Future<Usuario> consultarSesion(String tokenAcceso) async {
     try {
       final dto = await _remoteDataSource.consultarSesion(tokenAcceso);
-      return dto.toDomain();
+      final usuario = dto.toDomain();
+      await _guardarUsuario(usuario);
+      return usuario;
+    } on NetworkFailure {
+      rethrow;
     } on UnauthorizedFailure catch (e) {
       await _sessionStorage.limpiar();
       throw CredencialesInvalidasFailure(e.message);
@@ -162,5 +173,37 @@ final class LoginEstudianteRepositoryImpl implements LoginEstudianteRepository {
     } finally {
       await _sessionStorage.limpiar();
     }
+  }
+
+  @override
+  Future<Usuario?> usuarioGuardado() async {
+    final texto = await _sessionStorage.leerUsuarioJson();
+    if (texto == null) return null;
+    try {
+      final json = jsonDecode(texto) as Map<String, dynamic>;
+      return Usuario(
+        id: json['id'] as int,
+        codigoInstitucional: json['codigo_institucional'] as String,
+        correoInstitucional: json['correo_institucional'] as String,
+        nombres: json['nombres'] as String,
+        apellidos: json['apellidos'] as String,
+        roles: (json['roles'] as List).cast<String>(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _guardarUsuario(Usuario usuario) {
+    return _sessionStorage.guardarUsuarioJson(
+      jsonEncode({
+        'id': usuario.id,
+        'codigo_institucional': usuario.codigoInstitucional,
+        'correo_institucional': usuario.correoInstitucional,
+        'nombres': usuario.nombres,
+        'apellidos': usuario.apellidos,
+        'roles': usuario.roles,
+      }),
+    );
   }
 }

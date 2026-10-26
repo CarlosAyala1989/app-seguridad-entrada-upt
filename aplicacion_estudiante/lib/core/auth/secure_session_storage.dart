@@ -30,6 +30,7 @@ final class SecureSessionStorage {
   static const _keyTokenRenovacion = 'upt_token_renovacion';
   static const _keyAccesoExpiraEn = 'upt_token_acceso_expira_en';
   static const _keyRenovacionExpiraEn = 'upt_token_renovacion_expira_en';
+  static const _keyUsuario = 'upt_usuario';
 
   /// Guarda los tokens y sus fechas de expiración.
   ///
@@ -92,6 +93,19 @@ final class SecureSessionStorage {
     }
   }
 
+  /// Guarda los datos básicos de la cuenta (JSON) para reconocerla al abrir
+  /// la app sin internet.
+  Future<void> guardarUsuarioJson(String json) =>
+      _storage.write(key: _keyUsuario, value: json);
+
+  Future<String?> leerUsuarioJson() async {
+    try {
+      return await _storage.read(key: _keyUsuario);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Elimina por completo las claves de autenticación del dispositivo.
   Future<void> limpiar() async {
     await Future.wait([
@@ -99,6 +113,7 @@ final class SecureSessionStorage {
       _storage.delete(key: _keyTokenRenovacion),
       _storage.delete(key: _keyAccesoExpiraEn),
       _storage.delete(key: _keyRenovacionExpiraEn),
+      _storage.delete(key: _keyUsuario),
     ]);
   }
 }

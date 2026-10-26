@@ -94,6 +94,17 @@ final class AppStrings {
   static const locationLawNote =
       'Tus datos se tratan conforme a la Ley N.° 29733, Ley de Protección '
       'de Datos Personales del Perú.';
+  static const qrOfflineBadge = 'Sin conexión · generado en tu teléfono';
+  static const qrOfflineOtp = 'Código';
+  static const qrOfflineRenewPrefix = 'Cambia cada';
+  static const qrOfflineRenewSuffix = 'segundos, sin usar internet ni GPS.';
+  static const qrOfflineHelp =
+      'El guardia lo valida con su conexión. Si cambiaste la hora del '
+      'teléfono, conéctate para sincronizar.';
+  static const qrOfflineNotLinked =
+      'No hay conexión y este teléfono aún no está preparado para el QR sin '
+      'conexión. Conéctate a internet y abre esta pantalla una vez.';
+  static const showQrOffline = 'Mostrar mi QR sin conexión';
   static const qrValidUntil = 'Válido hasta las';
   static const qrAutoRenew = 'Se renueva automáticamente al vencer.';
   static const qrOneUse = 'Sirve una sola vez.';

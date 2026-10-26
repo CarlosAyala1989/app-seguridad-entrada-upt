@@ -12,9 +12,14 @@ class CodigoQrPage extends StatefulWidget {
     super.key,
     required this.viewModel,
     this.onVerAvisoPrivacidad,
+    this.iniciarSinConexion = false,
   });
 
   final CodigoQrViewModel viewModel;
+
+  /// Abre directamente el QR sin conexión (p. ej. desde el carné cuando no
+  /// hay internet), sin pedir ubicación.
+  final bool iniciarSinConexion;
 
   /// Abre el aviso de privacidad desde la explicación de la ubicación.
   final VoidCallback? onVerAvisoPrivacidad;
@@ -25,6 +30,17 @@ class CodigoQrPage extends StatefulWidget {
 
 class _CodigoQrPageState extends State<CodigoQrPage> {
   bool _ubicacionExplicada = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.iniciarSinConexion) {
+      Future<void>.microtask(widget.viewModel.generarSinConexion);
+    } else {
+      // Con internet, deja el teléfono listo para el QR sin conexión.
+      Future<void>.microtask(widget.viewModel.prepararSinConexion);
+    }
+  }
 
   @override
   void dispose() {
@@ -93,6 +109,9 @@ class _CodigoQrPageState extends State<CodigoQrPage> {
                 estado: visible,
                 alRevocar: _revocar,
               ),
+              CodigoQrOfflineVisible visible => _CodigoOfflineVisible(
+                estado: visible,
+              ),
               CodigoQrError(:final message) => _Mensaje(
                 icono: Icons.error_outline,
                 texto: message,
@@ -129,9 +148,9 @@ class _Cargando extends StatelessWidget {
             Text(
               AppStrings.generatingQr,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textoSecundario,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.textoSecundario),
             ),
           ],
         ),
@@ -166,7 +185,9 @@ class _Mensaje extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(child: _IconoCircular(icono: icono, esError: esError)),
+              Center(
+                child: _IconoCircular(icono: icono, esError: esError),
+              ),
               const SizedBox(height: 20),
               Text(
                 esError ? AppStrings.qrErrorTitle : AppStrings.qrPassTitle,
@@ -291,7 +312,8 @@ class _CodigoVisible extends StatelessWidget {
               children: [
                 _FilaDato(
                   icono: Icons.schedule,
-                  titulo: '${AppStrings.qrValidUntil} ${_hora(codigo.expiraEn)}',
+                  titulo:
+                      '${AppStrings.qrValidUntil} ${_hora(codigo.expiraEn)}',
                 ),
                 const Divider(height: 20),
                 _FilaDato(
@@ -356,6 +378,132 @@ class _CodigoVisible extends StatelessWidget {
     final local = fecha.toLocal();
     String dos(int n) => n.toString().padLeft(2, '0');
     return '${dos(local.hour)}:${dos(local.minute)}:${dos(local.second)}';
+  }
+}
+
+/// QR calculado en el teléfono. No hay botón "Anular": esa acción es para
+/// el QR en línea y necesita internet.
+class _CodigoOfflineVisible extends StatelessWidget {
+  const _CodigoOfflineVisible({required this.estado});
+
+  final CodigoQrOfflineVisible estado;
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    final codigo = estado.codigo;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            const Center(child: _InsigniaSinConexion()),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.qrPassTitle,
+              textAlign: TextAlign.center,
+              style: textos.headlineMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              AppStrings.qrPassSubtitle,
+              textAlign: TextAlign.center,
+              style: textos.bodyMedium?.copyWith(
+                color: AppColors.textoSecundario,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(color: AppColors.azulUpt, width: 2),
+                ),
+                child: QrImageView(
+                  data: codigo.contenido,
+                  size: 240,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: AppColors.azulProfundo,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: AppColors.azulProfundo,
+                  ),
+                  semanticsLabel: AppStrings.qrTitle,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${AppStrings.qrOfflineOtp}: '
+              '${codigo.otp.substring(0, 3)} ${codigo.otp.substring(3)}',
+              textAlign: TextAlign.center,
+              style: textos.titleMedium?.copyWith(
+                fontFamily: 'monospace',
+                letterSpacing: 2,
+                color: AppColors.azulProfundo,
+              ),
+            ),
+            const SizedBox(height: 16),
+            CuentaRegresivaQr(
+              segundosRestantes: estado.segundosRestantes,
+              duracionSegundos: codigo.periodoSegundos,
+            ),
+            const SizedBox(height: 16),
+            _TarjetaQr(
+              children: [
+                _FilaDato(
+                  icono: Icons.autorenew,
+                  titulo:
+                      '${AppStrings.qrOfflineRenewPrefix} '
+                      '${codigo.periodoSegundos} '
+                      '${AppStrings.qrOfflineRenewSuffix}',
+                ),
+                const Divider(height: 20),
+                const _FilaDato(
+                  icono: Icons.wifi_off,
+                  titulo: AppStrings.qrOfflineHelp,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InsigniaSinConexion extends StatelessWidget {
+  const _InsigniaSinConexion();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.doradoClaro,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, size: 16, color: AppColors.dorado),
+          const SizedBox(width: 6),
+          Text(
+            AppStrings.qrOfflineBadge,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: AppColors.dorado,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

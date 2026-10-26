@@ -1,3 +1,4 @@
+import '../error/failure.dart';
 import 'secure_session_storage.dart';
 
 abstract interface class SessionTokenProvider {
@@ -31,7 +32,8 @@ final class SecureSessionTokenProvider implements SessionTokenProvider {
 
 /// Entrega un token de acceso vigente: si está por caducar, lo renueva antes
 /// con el token de renovación. Si la renovación falla, borra la sesión local
-/// y devuelve `null`, lo que obliga a iniciar sesión otra vez.
+/// y devuelve `null`, lo que obliga a iniciar sesión otra vez. Si falla solo
+/// por falta de internet, conserva la sesión y lanza [NetworkFailure].
 final class RenovableSessionTokenProvider implements SessionTokenProvider {
   RenovableSessionTokenProvider({
     required Future<SessionTokensData?> Function() leerTokens,
@@ -70,13 +72,16 @@ final class RenovableSessionTokenProvider implements SessionTokenProvider {
     }
 
     // Varias peticiones a la vez comparten una sola renovación.
-    return _renovacionEnCurso ??= _renovarUnaVez(tokens.tokenRenovacion)
-        .whenComplete(() => _renovacionEnCurso = null);
+    return _renovacionEnCurso ??= _renovarUnaVez(
+      tokens.tokenRenovacion,
+    ).whenComplete(() => _renovacionEnCurso = null);
   }
 
   Future<String?> _renovarUnaVez(String tokenRenovacion) async {
     try {
       return await _renovar(tokenRenovacion);
+    } on NetworkFailure {
+      rethrow;
     } catch (_) {
       await _limpiar();
       return null;

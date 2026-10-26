@@ -1,4 +1,5 @@
 import '../../../../core/auth/secure_session_storage.dart';
+import '../../../../core/error/failure.dart';
 import '../entities/usuario.dart';
 import '../repositories/login_estudiante_repository.dart';
 
@@ -14,6 +15,10 @@ final class RestaurarORenovarSesionUseCase {
 
   /// Restaura la sesión local si sigue activa, o renueva usando el token de renovación.
   /// Devuelve el [Usuario] autenticado o `null` si no hay sesión válida.
+  ///
+  /// Sin internet no se borra la sesión: se entra con la cuenta guardada,
+  /// para poder mostrar el QR sin conexión. Los datos protegidos se vuelven
+  /// a pedir cuando haya red.
   Future<Usuario?> call() async {
     final tokens = await _sessionStorage.leerTokens();
     if (tokens == null) {
@@ -25,30 +30,26 @@ final class RestaurarORenovarSesionUseCase {
       return null;
     }
 
-    if (tokens.accesoExpirado) {
-      try {
-        final nuevaSesion = await _repository.renovarSesion(
-          tokens.tokenRenovacion,
-        );
-        return nuevaSesion.usuario;
-      } catch (_) {
-        await _sessionStorage.limpiar();
-        return null;
-      }
-    }
-
     try {
-      return await _repository.consultarSesion(tokens.tokenAcceso);
-    } catch (_) {
-      try {
-        final nuevaSesion = await _repository.renovarSesion(
+      if (tokens.accesoExpirado) {
+        return (await _repository.renovarSesion(
           tokens.tokenRenovacion,
-        );
-        return nuevaSesion.usuario;
-      } catch (_) {
-        await _sessionStorage.limpiar();
-        return null;
+        )).usuario;
       }
+      try {
+        return await _repository.consultarSesion(tokens.tokenAcceso);
+      } on NetworkFailure {
+        rethrow;
+      } catch (_) {
+        return (await _repository.renovarSesion(
+          tokens.tokenRenovacion,
+        )).usuario;
+      }
+    } on NetworkFailure {
+      return _repository.usuarioGuardado();
+    } catch (_) {
+      await _sessionStorage.limpiar();
+      return null;
     }
   }
 }

@@ -7,8 +7,12 @@ import '../../features/biometria/domain/usecases/bloqueo_biometrico_use_case.dar
 import '../../features/biometria/presentation/views/bloqueo_biometrico_gate.dart';
 import '../../features/biometria/presentation/widgets/ajustes_biometria_tile.dart';
 import '../../features/codigo_qr/data/datasources/codigo_qr_remote_data_source.dart';
+import '../../features/codigo_qr/data/datasources/qr_offline_local_data_source.dart';
+import '../../features/codigo_qr/data/datasources/qr_offline_remote_data_source.dart';
 import '../../features/codigo_qr/data/repositories/codigo_qr_repository_impl.dart';
+import '../../features/codigo_qr/data/repositories/qr_offline_repository_impl.dart';
 import '../../features/codigo_qr/domain/usecases/generar_codigo_qr_use_case.dart';
+import '../../features/codigo_qr/domain/usecases/qr_offline_use_cases.dart';
 import '../../features/codigo_qr/domain/usecases/revocar_codigo_qr_use_case.dart';
 import '../../features/codigo_qr/presentation/viewmodels/codigo_qr_view_model.dart';
 import '../../features/codigo_qr/presentation/views/codigo_qr_page.dart';
@@ -77,9 +81,21 @@ final class AppDependencies {
         leerTokens: _sessionStorage.leerTokens,
         limpiar: _sessionStorage.limpiar,
         renovar: (tokenRenovacion) async =>
-            (await _loginRepository.renovarSesion(tokenRenovacion))
-                .tokenAcceso,
+            (await _loginRepository.renovarSesion(tokenRenovacion)).tokenAcceso,
       );
+
+  /// Vinculación del QR sin conexión (una por teléfono y cuenta).
+  static final QrOfflineRepositoryImpl _qrOffline = QrOfflineRepositoryImpl(
+    remote: QrOfflineRemoteDataSourceImpl(
+      httpGateway: _gateway,
+      sessionTokenProvider: _tokenProvider,
+    ),
+    local: QrOfflineLocalDataSource(),
+  );
+
+  /// ID de la cuenta guardada en el teléfono (sirve también sin internet).
+  static Future<int?> _usuarioActual() async =>
+      (await _loginRepository.usuarioGuardado())?.id;
 
   /// Permite navegar al login desde la pantalla de bloqueo, que está por
   /// encima de todas las rutas.
@@ -98,6 +114,7 @@ final class AppDependencies {
     await CerrarSesionUseCase(
       repository: _loginRepository,
       sessionStorage: _sessionStorage,
+      borrarDatosOffline: _qrOffline.borrar,
     )();
     nav?.pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => buildBienvenidaPage()),
@@ -134,9 +151,9 @@ final class AppDependencies {
   static Widget buildBienvenidaPage() {
     return Builder(
       builder: (context) => BienvenidaPage(
-        onIniciarSesion: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => buildLoginPage()),
-        ),
+        onIniciarSesion: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => buildLoginPage())),
         onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
       ),
     );
@@ -160,9 +177,7 @@ final class AppDependencies {
             // La bienvenida y el login salen de la pila: con "atrás" no se
             // vuelve a ellos.
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute<void>(
-                builder: (_) => buildPerfilDigitalPage(),
-              ),
+              MaterialPageRoute<void>(builder: (_) => buildPerfilDigitalPage()),
               (_) => false,
             );
           },
@@ -190,13 +205,18 @@ final class AppDependencies {
       builder: (context) {
         return PerfilDigitalPage(
           viewModel: viewModel,
-          onVerCodigoQr: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => buildCodigoQrPage()),
+          onVerCodigoQr: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => buildCodigoQrPage())),
+          onVerQrSinConexion: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => buildCodigoQrPage(sinConexion: true),
+            ),
           ),
           onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
-          onVerHistorial: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => buildHistorialPage()),
-          ),
+          onVerHistorial: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => buildHistorialPage())),
           onCerrarSesion: () =>
               _cerrarSesionYVolverAlLogin(Navigator.of(context)),
           accionExtra: CampanaNotificaciones(
@@ -277,7 +297,7 @@ final class AppDependencies {
     );
   }
 
-  static Widget buildCodigoQrPage() {
+  static Widget buildCodigoQrPage({bool sinConexion = false}) {
     // La ubicación simulada solo existe en modo debug y con
     // --dart-define=UBICACION_SIMULADA=true (para probar fuera del campus).
     final UbicacionRepository ubicacion =
@@ -296,11 +316,20 @@ final class AppDependencies {
         repository: repository,
       ),
       revocarCodigoQr: RevocarCodigoQrUseCase(repository),
+      prepararQrOffline: PrepararQrOfflineUseCase(
+        repository: _qrOffline,
+        usuarioActual: _usuarioActual,
+      ),
+      obtenerVinculacionOffline: ObtenerVinculacionOfflineUseCase(
+        repository: _qrOffline,
+        usuarioActual: _usuarioActual,
+      ),
     );
     return Builder(
       builder: (context) => CodigoQrPage(
         viewModel: viewModel,
         onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+        iniciarSinConexion: sinConexion,
       ),
     );
   }

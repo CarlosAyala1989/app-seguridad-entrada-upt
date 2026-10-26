@@ -65,6 +65,9 @@ final class FakeLoginEstudianteRepository implements LoginEstudianteRepository {
 
   @override
   Future<void> cerrarSesion(String tokenAcceso) async {}
+
+  @override
+  Future<Usuario?> usuarioGuardado() async => null;
 }
 
 void main() {
