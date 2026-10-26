@@ -29,6 +29,15 @@ import '../../features/login_estudiante/domain/usecases/verificar_intranet_use_c
 import '../../features/login_estudiante/presentation/viewmodels/login_view_model.dart';
 import '../../features/login_estudiante/presentation/views/login_page.dart';
 import '../../features/login_estudiante/presentation/views/sesion_gate.dart';
+import '../../features/notificaciones/data/datasources/notificaciones_remote_data_source.dart';
+import '../../features/notificaciones/data/repositories/notificaciones_repository_impl.dart';
+import '../../features/notificaciones/domain/entities/notificacion.dart';
+import '../../features/notificaciones/domain/usecases/notificaciones_use_cases.dart';
+import '../../features/notificaciones/presentation/controllers/resumen_notificaciones_controller.dart';
+import '../../features/notificaciones/presentation/viewmodels/bandeja_view_model.dart';
+import '../../features/notificaciones/presentation/views/bandeja_notificaciones_page.dart';
+import '../../features/notificaciones/presentation/views/detalle_notificacion_page.dart';
+import '../../features/notificaciones/presentation/widgets/campana_notificaciones.dart';
 import '../../features/perfil_digital/data/datasources/perfil_digital_remote_data_source.dart';
 import '../../features/perfil_digital/data/repositories/perfil_digital_repository_impl.dart';
 import '../../features/perfil_digital/domain/usecases/obtener_perfil_digital.dart';
@@ -164,6 +173,17 @@ final class AppDependencies {
           ),
           onCerrarSesion: () =>
               _cerrarSesionYVolverAlLogin(Navigator.of(context)),
+          accionExtra: CampanaNotificaciones(
+            controller: ResumenNotificacionesController(
+              consultarResumen: ConsultarResumenNotificacionesUseCase(
+                _notificaciones,
+              ),
+              obtenerNotificaciones: ObtenerNotificacionesUseCase(
+                _notificaciones,
+              ),
+            ),
+            onAbrirBandeja: () => abrirBandejaNotificaciones(context),
+          ),
           ajustes: AjustesBiometriaTile(
             estaDisponible: _bloqueo.estaDisponible,
             estaActivada: _bloqueo.estaActivada,
@@ -172,6 +192,48 @@ final class AppDependencies {
           ),
         );
       },
+    );
+  }
+
+  static final NotificacionesRepositoryImpl _notificaciones =
+      NotificacionesRepositoryImpl(
+        NotificacionesRemoteDataSource(
+          httpGateway: _gateway,
+          sessionTokenProvider: _tokenProvider,
+        ),
+      );
+
+  /// Abre la bandeja de avisos (US-20 y US-21); [filtro] permite abrirla
+  /// directamente en un tipo de aviso.
+  static Future<void> abrirBandejaNotificaciones(
+    BuildContext context, {
+    TipoNotificacion? filtro,
+  }) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BandejaNotificacionesPage(
+          viewModel: BandejaViewModel(
+            obtenerNotificaciones: ObtenerNotificacionesUseCase(
+              _notificaciones,
+            ),
+            filtroInicial: filtro,
+          ),
+          abrirDetalle: (context, notificacion) =>
+              Navigator.of(context).push<Notificacion>(
+                MaterialPageRoute<Notificacion>(
+                  builder: (_) => DetalleNotificacionPage(
+                    notificacion: notificacion,
+                    obtenerDetalle: ObtenerDetalleNotificacionUseCase(
+                      _notificaciones,
+                    ).call,
+                    marcarLeida: MarcarNotificacionLeidaUseCase(
+                      _notificaciones,
+                    ).call,
+                  ),
+                ),
+              ),
+        ),
+      ),
     );
   }
 

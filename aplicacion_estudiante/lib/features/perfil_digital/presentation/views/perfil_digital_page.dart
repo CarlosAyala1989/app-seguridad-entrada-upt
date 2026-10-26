@@ -14,6 +14,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.onVerAvisoPrivacidad,
     this.onVerHistorial,
     this.ajustes,
+    this.accionExtra,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -31,6 +32,9 @@ class PerfilDigitalPage extends StatefulWidget {
   final VoidCallback? onVerHistorial;
   /// Ajustes opcionales al final de la identidad (p. ej. biometría).
   final Widget? ajustes;
+
+  /// Acción adicional en la barra superior (p. ej. la campana de avisos).
+  final Widget? accionExtra;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -81,6 +85,7 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
       appBar: AppBar(
         title: const Text(AppStrings.profileTitle),
         actions: [
+          if (widget.accionExtra != null) widget.accionExtra!,
           if (widget.onVerAvisoPrivacidad != null)
             IconButton(
               icon: const Icon(Icons.privacy_tip_outlined),
