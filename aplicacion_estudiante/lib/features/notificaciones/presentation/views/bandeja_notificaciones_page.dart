@@ -38,6 +38,12 @@ class _BandejaNotificacionesPageState extends State<BandejaNotificacionesPage> {
     super.dispose();
   }
 
+  Future<void> _filtrar(TipoNotificacion? filtro) async {
+    final carga = widget.viewModel.cambiarFiltro(filtro);
+    setState(() {}); // marca el chip elegido mientras carga
+    await carga;
+  }
+
   Future<void> _abrir(Notificacion notificacion) async {
     final actualizada = await widget.abrirDetalle(context, notificacion);
     if (actualizada != null) widget.viewModel.actualizar(actualizada);
@@ -48,7 +54,40 @@ class _BandejaNotificacionesPageState extends State<BandejaNotificacionesPage> {
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.notificationsTitle)),
       body: SafeArea(
-        child: StreamBuilder<BandejaState>(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text(AppStrings.historyAll),
+                    selected: widget.viewModel.filtro == null,
+                    onSelected: (_) => _filtrar(null),
+                  ),
+                  ChoiceChip(
+                    label: const Text(AppStrings.notificationsDenials),
+                    selected:
+                        widget.viewModel.filtro ==
+                        TipoNotificacion.denegacionAcceso,
+                    onSelected: (_) =>
+                        _filtrar(TipoNotificacion.denegacionAcceso),
+                  ),
+                  ChoiceChip(
+                    avatar: const Icon(Icons.gpp_maybe, size: 18),
+                    label: const Text(AppStrings.notificationsAlerts),
+                    selected:
+                        widget.viewModel.filtro ==
+                        TipoNotificacion.intentoSospechoso,
+                    onSelected: (_) =>
+                        _filtrar(TipoNotificacion.intentoSospechoso),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<BandejaState>(
           stream: widget.viewModel.states,
           initialData: widget.viewModel.currentState,
           builder: (context, snapshot) {
@@ -98,6 +137,9 @@ class _BandejaNotificacionesPageState extends State<BandejaNotificacionesPage> {
               ),
             };
           },
+              ),
+            ),
+          ],
         ),
       ),
     );

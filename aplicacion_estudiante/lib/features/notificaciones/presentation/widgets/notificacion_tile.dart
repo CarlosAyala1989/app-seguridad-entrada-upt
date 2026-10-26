@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/l10n/app_strings.dart';
 import '../../domain/entities/notificacion.dart';
 
 /// dd/mm/aaaa hh:mm en la hora del teléfono (la API envía UTC).
@@ -26,6 +27,9 @@ class NotificacionTile extends StatelessWidget {
     final esquema = Theme.of(context).colorScheme;
     final n = notificacion;
     return Card(
+      // Las alertas de posible uso sospechoso (US-21) se distinguen a simple
+      // vista de las denegaciones normales.
+      color: n.esAlerta ? esquema.errorContainer : null,
       child: ListTile(
         onTap: onTap,
         leading: Icon(
@@ -39,6 +43,7 @@ class NotificacionTile extends StatelessWidget {
           ),
         ),
         subtitle: Text(
+          '${n.esAlerta ? '${AppStrings.securityAlert} · ' : ''}'
           '${n.puntoAccesoNombre} · ${fechaHoraLocal(n.registradoEn)}',
         ),
         trailing: n.leida

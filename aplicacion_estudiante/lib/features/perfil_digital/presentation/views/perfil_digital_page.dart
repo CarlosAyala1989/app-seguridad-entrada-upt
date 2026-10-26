@@ -15,6 +15,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.onVerHistorial,
     this.ajustes,
     this.accionExtra,
+    this.encabezado,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -35,6 +36,9 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Acción adicional en la barra superior (p. ej. la campana de avisos).
   final Widget? accionExtra;
+
+  /// Se muestra encima del contenido (p. ej. una alerta de seguridad).
+  final Widget? encabezado;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -101,16 +105,27 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
         ],
       ),
       body: SafeArea(
-        child: StreamBuilder<PerfilDigitalState>(
-          stream: widget.viewModel.states,
-          initialData: widget.viewModel.currentState,
-          builder: (context, snapshot) => _StateBody(
-            state: snapshot.data ?? const PerfilDigitalLoading(),
-            onReload: widget.viewModel.cargar,
-            onVerCodigoQr: widget.onVerCodigoQr,
-            onVerHistorial: widget.onVerHistorial,
-            ajustes: widget.ajustes,
-          ),
+        child: Column(
+          children: [
+            if (widget.encabezado != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: widget.encabezado,
+              ),
+            Expanded(
+              child: StreamBuilder<PerfilDigitalState>(
+                stream: widget.viewModel.states,
+                initialData: widget.viewModel.currentState,
+                builder: (context, snapshot) => _StateBody(
+                  state: snapshot.data ?? const PerfilDigitalLoading(),
+                  onReload: widget.viewModel.cargar,
+                  onVerCodigoQr: widget.onVerCodigoQr,
+                  onVerHistorial: widget.onVerHistorial,
+                  ajustes: widget.ajustes,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
