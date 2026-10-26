@@ -77,6 +77,17 @@ final class AppStrings {
       'renueva solo mientras tengas esta pantalla abierta.';
   static const generateQr = 'Generar código QR';
   static const generatingQr = 'Obteniendo tu ubicación y generando el código…';
+  static const qrPassTitle = 'Pase de ingreso';
+  static const qrPassSubtitle =
+      'Acerca el código al lector del punto de acceso';
+  static const qrErrorTitle = 'No se pudo generar';
+  static const qrAccessPoint = 'Punto de acceso asignado';
+  static const revokeQrHelp =
+      'Úsalo solo si perdiste el celular o crees que alguien capturó tu '
+      'código.';
+  static const locationLawNote =
+      'Tus datos se tratan conforme a la Ley N.° 29733, Ley de Protección '
+      'de Datos Personales del Perú.';
   static const qrValidUntil = 'Válido hasta las';
   static const qrAutoRenew = 'Se renueva automáticamente al vencer.';
   static const qrOneUse = 'Sirve una sola vez.';
