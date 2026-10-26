@@ -89,4 +89,14 @@ final class AppStrings {
   static const lockedBody =
       'Confirma con tu huella, rostro o el PIN del teléfono para continuar.';
   static const unlock = 'Desbloquear';
+  static const notificationsTitle = 'Avisos';
+  static const notificationsEmpty = 'No tienes avisos.';
+  static const notificationsPendingPrefix = 'Tienes';
+  static const notificationsPendingSuffix = 'avisos sin leer';
+  static const notificationDetail = 'Detalle del aviso';
+  static const notificationCause = 'Causa';
+  static const notificationPlace = 'Puerta';
+  static const notificationWhen = 'Fecha y hora del intento';
+  static const notificationSupport = 'A quién acudir';
+  static const see = 'Ver';
 }
