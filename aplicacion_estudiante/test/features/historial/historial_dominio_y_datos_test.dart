@@ -72,6 +72,14 @@ final class _Gateway implements HttpGateway {
     Map<String, String> headers = const {},
     Duration? timeout,
   }) => throw UnimplementedError();
+
+  @override
+  Future<HttpResponseData> patch(
+    String path, {
+    Map<String, String> headers = const {},
+    Map<String, Object?>? body,
+    Duration? timeout,
+  }) => throw UnimplementedError();
 }
 
 RegistroHistorial _registro(ResultadoIngreso r, String motivo) =>
