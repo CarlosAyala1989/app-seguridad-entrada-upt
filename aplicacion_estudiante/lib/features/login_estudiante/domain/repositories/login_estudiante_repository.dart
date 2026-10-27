@@ -30,4 +30,8 @@ abstract interface class LoginEstudianteRepository {
 
   /// Invalida la sesión actual en el backend.
   Future<void> cerrarSesion(String tokenAcceso);
+
+  /// Cuenta guardada en el teléfono con la última sesión, o `null`. Sirve
+  /// para entrar sin internet (por ejemplo, a mostrar el QR offline).
+  Future<Usuario?> usuarioGuardado();
 }

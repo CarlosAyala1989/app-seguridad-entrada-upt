@@ -41,6 +41,7 @@ void main() {
     final verificacion = VerificacionIntranet(
       codigo: '2026087688',
       nombreApellidos: 'Estudiante de Prueba',
+      escuelaProfesional: 'Ingeniería de Sistemas',
       verificacionIntranetId: 'ver-123',
       verificacionExpiraEn: DateTime(2030),
     );
@@ -76,6 +77,7 @@ void main() {
     expect(estado.transaccionId, autorizacion.transaccionId);
     expect(estado.urlAutorizacion, autorizacion.urlAutorizacion);
     expect(estado.expiraEn, autorizacion.expiraEn);
+    expect(estado.escuelaProfesional, 'Ingeniería de Sistemas');
     // El paso 2 muestra con qué identidad se continúa.
     expect(estado.codigo, verificacion.codigo);
     expect(estado.nombreApellidos, verificacion.nombreApellidos);

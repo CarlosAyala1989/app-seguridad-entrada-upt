@@ -1,5 +1,6 @@
 import 'package:aplicacion_estudiante/core/auth/secure_session_storage.dart';
 import 'package:aplicacion_estudiante/core/auth/session_token_provider.dart';
+import 'package:aplicacion_estudiante/core/error/failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -70,6 +71,15 @@ void main() {
     );
     expect(await p.readAccessToken(), isNull);
     expect(limpiado, isTrue);
+  });
+
+  test('sin internet conserva la sesión y avisa del problema de red', () async {
+    final p = proveedor(
+      tokens(accesoVence: Duration.zero),
+      renovar: (_) async => throw const NetworkFailure(),
+    );
+    await expectLater(p.readAccessToken(), throwsA(isA<NetworkFailure>()));
+    expect(limpiado, isFalse);
   });
 
   test('con el token de renovación vencido borra la sesión', () async {

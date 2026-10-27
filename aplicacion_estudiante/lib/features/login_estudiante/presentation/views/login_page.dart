@@ -145,10 +145,7 @@ class _LoginPageState extends State<LoginPage> {
           subtitulo: AppStrings.loginSubtitle,
         ),
         const SizedBox(height: 24),
-        const IndicadorPasoLogin(
-          paso: 1,
-          descripcion: AppStrings.loginStep1,
-        ),
+        const IndicadorPasoLogin(paso: 1, descripcion: AppStrings.loginStep1),
         const SizedBox(height: 24),
         if (state is LoginErrorState) ...[
           MensajeErrorLogin(mensaje: state.mensaje),
@@ -330,50 +327,53 @@ class _LoginPageState extends State<LoginPage> {
           subtitulo: AppStrings.loginStep2Subtitle,
         ),
         const SizedBox(height: 24),
-        const IndicadorPasoLogin(
-          paso: 2,
-          descripcion: AppStrings.loginStep2,
-        ),
+        const IndicadorPasoLogin(paso: 2, descripcion: AppStrings.loginStep2),
         const SizedBox(height: 24),
         TarjetaLogin(
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: AppColors.verdeFondo,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.verdeAutorizado,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Identidad de intranet verificada',
-                      style: textos.labelLarge?.copyWith(
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: AppColors.verdeFondo,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.verdeAutorizado,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      AppStrings.loginIntranetVerified,
+                      style: textos.titleSmall?.copyWith(
                         color: AppColors.verdeAutorizado,
                       ),
                     ),
-                    if (preparado?.codigo != null) ...[
-                      const SizedBox(height: 2),
-                      Text(preparado!.codigo!, style: textos.titleLarge),
-                    ],
-                    if (preparado?.nombreApellidos != null)
-                      Text(
-                        preparado!.nombreApellidos!,
-                        style: textos.bodyMedium?.copyWith(
-                          color: AppColors.textoSecundario,
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              // Resumen de lo que devolvió la intranet: el estudiante revisa
+              // sus datos antes de continuar con Google.
+              if (preparado != null) ...[
+                const Divider(height: 24),
+                _DatoIntranet(
+                  etiqueta: AppStrings.loginFullName,
+                  valor: preparado.nombreApellidos,
+                ),
+                _DatoIntranet(
+                  etiqueta: AppStrings.loginInstitutionalCode,
+                  valor: preparado.codigo,
+                ),
+                _DatoIntranet(
+                  etiqueta: AppStrings.loginSchool,
+                  valor: preparado.escuelaProfesional,
+                ),
+              ],
             ],
           ),
         ),
@@ -394,7 +394,7 @@ class _LoginPageState extends State<LoginPage> {
               expiraEn: preparado.expiraEn,
             ),
             icon: const Icon(Icons.open_in_browser),
-            label: const Text('Continuar con Google'),
+            label: const Text(AppStrings.loginContinueGoogle),
           ),
         ],
         if (esperando != null) ...[
@@ -422,8 +422,9 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () =>
-                widget.viewModel.abrirNavegadorGoogle(esperando.urlAutorizacion),
+            onPressed: () => widget.viewModel.abrirNavegadorGoogle(
+              esperando.urlAutorizacion,
+            ),
             icon: const Icon(Icons.open_in_browser),
             label: const Text('Reabrir ventana de Google'),
           ),
@@ -437,6 +438,45 @@ class _LoginPageState extends State<LoginPage> {
           label: const Text(AppStrings.loginBackToStep1),
         ),
       ],
+    );
+  }
+}
+
+/// Un dato del resumen de la intranet. Si no llegó, lo dice en vez de
+/// inventar un valor.
+class _DatoIntranet extends StatelessWidget {
+  const _DatoIntranet({required this.etiqueta, required this.valor});
+
+  final String etiqueta;
+  final String? valor;
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    final disponible = valor != null && valor!.trim().isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            etiqueta,
+            style: textos.labelMedium?.copyWith(
+              color: AppColors.textoSecundario,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            disponible ? valor! : AppStrings.loginNotInIntranet,
+            style: disponible
+                ? textos.titleSmall
+                : textos.bodyMedium?.copyWith(
+                    color: AppColors.textoSecundario,
+                    fontStyle: FontStyle.italic,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

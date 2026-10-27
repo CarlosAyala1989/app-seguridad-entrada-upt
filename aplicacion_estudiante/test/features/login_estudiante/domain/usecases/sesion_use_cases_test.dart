@@ -1,4 +1,5 @@
 import 'package:aplicacion_estudiante/core/auth/secure_session_storage.dart';
+import 'package:aplicacion_estudiante/core/error/failure.dart';
 import 'package:aplicacion_estudiante/features/login_estudiante/domain/entities/sesion_estudiante.dart';
 import 'package:aplicacion_estudiante/features/login_estudiante/domain/entities/usuario.dart';
 import 'package:aplicacion_estudiante/features/login_estudiante/domain/failures/login_failure.dart';
@@ -131,6 +132,38 @@ void main() {
       expect(await restaurar(), isNull);
       expect(await storage.leerTokens(), isNull);
     });
+
+    test(
+      'sin internet entra con la cuenta guardada y no borra la sesión',
+      () async {
+        await guardarSesion(accesoVence: const Duration(minutes: 10));
+        when(
+          () => repository.consultarSesion(any()),
+        ).thenThrow(const NetworkFailure());
+        when(
+          () => repository.usuarioGuardado(),
+        ).thenAnswer((_) async => _usuario);
+
+        expect(await restaurar(), _usuario);
+        expect(await storage.leerTokens(), isNotNull);
+        // Sin red no tiene sentido intentar renovar.
+        verifyNever(() => repository.renovarSesion(any()));
+      },
+    );
+
+    test(
+      'sin internet y con el acceso vencido tampoco borra la sesión',
+      () async {
+        await guardarSesion(accesoVence: const Duration(minutes: -1));
+        when(
+          () => repository.renovarSesion(any()),
+        ).thenThrow(const NetworkFailure());
+        when(() => repository.usuarioGuardado()).thenAnswer((_) async => null);
+
+        expect(await restaurar(), isNull);
+        expect(await storage.leerTokens(), isNotNull);
+      },
+    );
   });
 
   group('CerrarSesionUseCase', () {
@@ -157,6 +190,21 @@ void main() {
 
       verifyZeroInteractions(repository);
       expect(await storage.leerTokens(), isNull);
+    });
+
+    test('también borra la vinculación del QR sin conexión', () async {
+      var borrada = false;
+      final cerrarTodo = CerrarSesionUseCase(
+        repository: repository,
+        sessionStorage: storage,
+        borrarDatosOffline: () async => borrada = true,
+      );
+      await guardarSesion(accesoVence: const Duration(minutes: 10));
+      when(() => repository.cerrarSesion(any())).thenAnswer((_) async {});
+
+      await cerrarTodo();
+
+      expect(borrada, isTrue);
     });
   });
 }

@@ -48,6 +48,7 @@ extension VerificacionIntranetDtoMapper on VerificacionIntranetDto {
       nombreApellidos: nombreApellidos,
       verificacionIntranetId: verificacionIntranetId,
       verificacionExpiraEn: DateTime.parse(verificacionExpiraEn),
+      escuelaProfesional: escuelaProfesional,
     );
   }
 }

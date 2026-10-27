@@ -18,6 +18,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.ajustes,
     this.accionExtra,
     this.encabezado,
+    this.onVerQrSinConexion,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -33,6 +34,7 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Abre el historial personal de ingresos (US-14).
   final VoidCallback? onVerHistorial;
+
   /// Ajustes opcionales al final de la identidad (p. ej. biometría).
   final Widget? ajustes;
 
@@ -41,6 +43,10 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Se muestra encima del contenido (p. ej. una alerta de seguridad).
   final Widget? encabezado;
+
+  /// Abre el QR sin conexión cuando no se pudo cargar la identidad (por
+  /// ejemplo, sin internet). Si es `null` no se muestra el botón.
+  final VoidCallback? onVerQrSinConexion;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -125,6 +131,7 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
                   onVerCodigoQr: widget.onVerCodigoQr,
                   onVerHistorial: widget.onVerHistorial,
                   ajustes: widget.ajustes,
+                  onVerQrSinConexion: widget.onVerQrSinConexion,
                 ),
               ),
             ),
@@ -142,6 +149,7 @@ class _StateBody extends StatelessWidget {
     this.onVerCodigoQr,
     this.onVerHistorial,
     this.ajustes,
+    this.onVerQrSinConexion,
   });
 
   final PerfilDigitalState state;
@@ -149,6 +157,7 @@ class _StateBody extends StatelessWidget {
   final VoidCallback? onVerCodigoQr;
   final VoidCallback? onVerHistorial;
   final Widget? ajustes;
+  final VoidCallback? onVerQrSinConexion;
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +178,7 @@ class _StateBody extends StatelessWidget {
       PerfilDigitalError(:final message, :final retry) => _ErrorState(
         message: message,
         onRetry: retry,
+        onVerQrSinConexion: onVerQrSinConexion,
       ),
     };
   }
@@ -243,7 +253,9 @@ class EstadoIngresoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textos = Theme.of(context).textTheme;
     final puede = perfil.permiteIngreso;
-    final colorPrincipal = puede ? AppColors.verdeAutorizado : AppColors.rojoError;
+    final colorPrincipal = puede
+        ? AppColors.verdeAutorizado
+        : AppColors.rojoError;
     final colorFondo = puede ? AppColors.verdeFondo : AppColors.rojoFondo;
 
     return Container(
@@ -260,7 +272,10 @@ class EstadoIngresoCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: colorFondo, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: colorFondo,
+              shape: BoxShape.circle,
+            ),
             child: Icon(
               puede ? Icons.check_circle : Icons.block,
               color: colorPrincipal,
@@ -331,10 +346,15 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+    this.onVerQrSinConexion,
+  });
 
   final String message;
   final Future<void> Function() onRetry;
+  final VoidCallback? onVerQrSinConexion;
 
   @override
   Widget build(BuildContext context) {
@@ -353,6 +373,14 @@ class _ErrorState extends StatelessWidget {
               icon: const Icon(Icons.refresh),
               label: const Text(AppStrings.retry),
             ),
+            if (onVerQrSinConexion != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onVerQrSinConexion,
+                icon: const Icon(Icons.qr_code_2),
+                label: const Text(AppStrings.showQrOffline),
+              ),
+            ],
           ],
         ),
       ),
