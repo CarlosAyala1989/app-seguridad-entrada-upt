@@ -46,7 +46,7 @@ void main() {
         const MaterialApp(home: BusquedaUsuarioScreen()),
       );
 
-      expect(find.text('Búsqueda Manual (US-16)'), findsOneWidget);
+      expect(find.text('Búsqueda Manual de Usuario'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('Buscar Usuario'), findsOneWidget);
       expect(find.text('Sin búsqueda activa'), findsOneWidget);

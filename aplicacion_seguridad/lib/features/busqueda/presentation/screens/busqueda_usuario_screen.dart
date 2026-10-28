@@ -102,7 +102,7 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
         backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
         title: const Text(
-          'Búsqueda Manual (US-16)',
+          'Búsqueda Manual de Usuario',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         leading: IconButton(
