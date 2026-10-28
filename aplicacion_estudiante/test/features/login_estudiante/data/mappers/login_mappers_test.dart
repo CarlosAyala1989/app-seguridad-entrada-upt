@@ -36,6 +36,37 @@ void main() {
       },
     );
 
+    test('VerificacionIntranetDto lee la escuela profesional', () {
+      final entidad = VerificacionIntranetDto.fromJson({
+        'codigo': '2022074266',
+        'nombre_apellidos': 'AYALA RAMOS, CARLOS DANIEL',
+        'escuela_profesional': 'Ingeniería de Sistemas',
+        'verificacion_intranet_id': '8bcdbcea-0682-4c77-a828-21855d6bcdfa',
+        'verificacion_expira_en': '2026-10-26T19:10:00.000Z',
+      }).toDomain();
+
+      expect(entidad.escuelaProfesional, 'Ingeniería de Sistemas');
+      expect(entidad.nombreApellidos, 'AYALA RAMOS, CARLOS DANIEL');
+    });
+
+    test('VerificacionIntranetDto acepta escuela null o ausente', () {
+      final base = {
+        'codigo': '2022074266',
+        'nombre_apellidos': 'AYALA RAMOS, CARLOS DANIEL',
+        'verificacion_intranet_id': '8bcdbcea-0682-4c77-a828-21855d6bcdfa',
+        'verificacion_expira_en': '2026-10-26T19:10:00.000Z',
+      };
+
+      final conNull = VerificacionIntranetDto.fromJson({
+        ...base,
+        'escuela_profesional': null,
+      }).toDomain();
+      final sinCampo = VerificacionIntranetDto.fromJson(base).toDomain();
+
+      expect(conNull.escuelaProfesional, isNull);
+      expect(sinCampo.escuelaProfesional, isNull);
+    });
+
     test('CaptchaIntranetDto parsea transaccion y fecha ISO 8601', () {
       final json = {
         'transaccion_id': '0664b410-145e-4ef3-8d98-1055d8d57ee9',

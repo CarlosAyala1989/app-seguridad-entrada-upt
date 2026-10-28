@@ -112,7 +112,7 @@ final class LoginViewModel {
       );
 
       // Prepara la URL de Google sin abrirla automáticamente
-      await _prepararGoogle(verificacion.verificacionIntranetId);
+      await _prepararGoogle(verificacion);
     } on Failure catch (e) {
       _emitir(LoginErrorState(mensaje: e.message));
     } catch (_) {
@@ -125,10 +125,10 @@ final class LoginViewModel {
   }
 
   /// 3. Obtiene la URL de Google y emite el estado LoginGooglePreparadoState.
-  Future<void> _prepararGoogle(String verificacionIntranetId) async {
+  Future<void> _prepararGoogle(VerificacionIntranet verificacion) async {
     try {
       final autorizacion = await _iniciarGoogleUseCase(
-        verificacionIntranetId: verificacionIntranetId,
+        verificacionIntranetId: verificacion.verificacionIntranetId,
       );
 
       _emitir(
@@ -136,6 +136,9 @@ final class LoginViewModel {
           transaccionId: autorizacion.transaccionId,
           urlAutorizacion: autorizacion.urlAutorizacion,
           expiraEn: autorizacion.expiraEn,
+          codigo: verificacion.codigo,
+          nombreApellidos: verificacion.nombreApellidos,
+          escuelaProfesional: verificacion.escuelaProfesional,
         ),
       );
     } on Failure catch (e) {

@@ -29,6 +29,7 @@ final class VerificacionIntranetDto {
     required this.nombreApellidos,
     required this.verificacionIntranetId,
     required this.verificacionExpiraEn,
+    this.escuelaProfesional,
   });
 
   factory VerificacionIntranetDto.fromJson(Map<String, Object?> json) {
@@ -37,14 +38,21 @@ final class VerificacionIntranetDto {
       nombreApellidos: json['nombre_apellidos']! as String,
       verificacionIntranetId: json['verificacion_intranet_id']! as String,
       verificacionExpiraEn: json['verificacion_expira_en']! as String,
+      // Puede llegar `null` (la intranet no la mostró) o no venir si la API
+      // es anterior al cambio.
+      escuelaProfesional: _textoOpcional(json['escuela_profesional']),
     );
   }
+
+  static String? _textoOpcional(Object? valor) =>
+      valor is String && valor.trim().isNotEmpty ? valor.trim() : null;
 
   final String codigo;
   final String nombreApellidos;
   final String verificacionIntranetId;
   final String expiraEn = '';
   final String verificacionExpiraEn;
+  final String? escuelaProfesional;
 }
 
 final class AutorizacionGoogleDto {

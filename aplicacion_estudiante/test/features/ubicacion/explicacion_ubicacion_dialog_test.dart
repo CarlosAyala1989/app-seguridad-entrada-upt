@@ -18,6 +18,8 @@ Future<bool?> _abrir(WidgetTester tester, String boton) async {
   await tester.tap(find.text('abrir'));
   await tester.pumpAndSettle();
   expect(find.text(AppStrings.locationWhyTitle), findsOneWidget);
+  // Recuerda bajo qué ley se protegen los datos (US-24).
+  expect(find.text(AppStrings.locationLawNote), findsOneWidget);
   await tester.tap(find.text(boton));
   await tester.pumpAndSettle();
   return resultado;

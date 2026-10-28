@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
 
 enum _EstadoBloqueo { comprobando, bloqueado, libre }
 
@@ -123,43 +124,126 @@ class PantallaBloqueo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
     return Material(
+      color: AppColors.fondo,
       child: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: comprobando
-                ? const CircularProgressIndicator()
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.fingerprint, size: 72),
-                      const SizedBox(height: 16),
-                      Text(
-                        AppStrings.lockedTitle,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        AppStrings.lockedBody,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      FilledButton.icon(
-                        onPressed: () => onDesbloquear(),
-                        icon: const Icon(Icons.lock_open),
-                        label: const Text(AppStrings.unlock),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton(
-                        onPressed: () => onCerrarSesion(),
-                        child: const Text(AppStrings.logout),
-                      ),
-                    ],
-                  ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: comprobando
+                  ? const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _HuellaEnCirculos(),
+                        SizedBox(height: 24),
+                        SizedBox(
+                          width: 160,
+                          child: LinearProgressIndicator(minHeight: 4),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: _InsigniaBiometrica()),
+                        const SizedBox(height: 40),
+                        const Center(child: _HuellaEnCirculos()),
+                        const SizedBox(height: 28),
+                        Text(
+                          AppStrings.lockedTitle,
+                          textAlign: TextAlign.center,
+                          style: textos.headlineMedium,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          AppStrings.lockedBody,
+                          textAlign: TextAlign.center,
+                          style: textos.bodyLarge?.copyWith(
+                            color: AppColors.textoSecundario,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        FilledButton.icon(
+                          onPressed: () => onDesbloquear(),
+                          icon: const Icon(Icons.fingerprint),
+                          label: const Text(AppStrings.unlock),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => onCerrarSesion(),
+                          icon: const Icon(Icons.logout),
+                          label: const Text(AppStrings.logout),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Huella dentro de dos círculos concéntricos, como en el diseño de Stitch.
+class _HuellaEnCirculos extends StatelessWidget {
+  const _HuellaEnCirculos();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: const BoxDecoration(
+        color: AppColors.superficieBaja,
+        shape: BoxShape.circle,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: const BoxDecoration(
+          color: AppColors.superficie,
+          shape: BoxShape.circle,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: const BoxDecoration(
+            color: AppColors.azulUpt,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.fingerprint, size: 44, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+class _InsigniaBiometrica extends StatelessWidget {
+  const _InsigniaBiometrica();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.superficie,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.verified_user, size: 16, color: AppColors.azulUpt),
+          const SizedBox(width: 6),
+          Text(
+            AppStrings.lockedBadge.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.azulUpt,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
       ),
     );
   }

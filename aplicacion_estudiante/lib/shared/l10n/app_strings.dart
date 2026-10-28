@@ -5,6 +5,43 @@ final class AppStrings {
   static const profileTitle = 'Identidad digital UPT';
   static const loadingProfile = 'Cargando perfil digital';
   static const preparingSession = 'Preparando una sesión segura…';
+  static const universityName = 'Universidad Privada de Tacna';
+  static const welcomeBadge = 'Control de ingreso al campus';
+  static const welcomeTitle = 'Identidad Digital UPT';
+  static const welcomeBody =
+      'Tu carné universitario y tu código QR de ingreso al campus, '
+      'en un solo lugar.';
+  static const welcomeLogin = 'Iniciar sesión';
+  static const welcomePrivacy = 'Aviso de privacidad';
+  static const welcomeFooter =
+      'Acceso exclusivo para la comunidad universitaria de la UPT';
+  static const welcomeCampus = 'Campus Capanique · Tacna';
+  static const cardSubtitle = 'Carné universitario digital';
+  static const identityVerified = 'Identidad verificada por la UPT';
+  static const canEnterDetail =
+      'Identidad verificada, cuenta activa y acceso autorizado.';
+  static const loginTitle = 'Verifica tu identidad';
+  static const loginSubtitle = 'Credenciales de la intranet académica';
+  static const loginStep1 = 'Credenciales UPT';
+  static const loginCodeLabel = 'Código universitario';
+  static const loginPasswordLabel = 'Contraseña de la intranet';
+  static const loginCaptchaTitle = 'Control de seguridad';
+  static const loginVerify = 'Verificar';
+  static const loginFooter =
+      'Tus credenciales se validan directamente con la intranet de la UPT';
+  static const loginStep2Title = 'Autenticación en dos pasos';
+  static const loginStep2Subtitle = 'Cuenta institucional @virtual.upt.pe';
+  static const loginStep2 = 'Correo institucional';
+  static const loginIntranetVerified = 'Identidad de intranet verificada';
+  static const loginFullName = 'Nombre completo';
+  static const loginInstitutionalCode = 'Código institucional';
+  static const loginSchool = 'Escuela profesional';
+  static const loginNotInIntranet = 'No disponible en la intranet';
+  static const loginContinueGoogle = 'Continuar con Google institucional';
+  static const loginDeviceNotice =
+      'Por seguridad, no inicies sesión en dispositivos compartidos o de '
+      'uso público.';
+  static const loginBackToStep1 = 'Regresar al paso anterior';
   static const logout = 'Cerrar sesión';
   static const logoutConfirmTitle = '¿Cerrar sesión?';
   static const logoutConfirmBody =
@@ -46,6 +83,28 @@ final class AppStrings {
       'renueva solo mientras tengas esta pantalla abierta.';
   static const generateQr = 'Generar código QR';
   static const generatingQr = 'Obteniendo tu ubicación y generando el código…';
+  static const qrPassTitle = 'Pase de ingreso';
+  static const qrPassSubtitle =
+      'Acerca el código al lector del punto de acceso';
+  static const qrErrorTitle = 'No se pudo generar';
+  static const qrAccessPoint = 'Punto de acceso asignado';
+  static const revokeQrHelp =
+      'Úsalo solo si perdiste el celular o crees que alguien capturó tu '
+      'código.';
+  static const locationLawNote =
+      'Tus datos se tratan conforme a la Ley N.° 29733, Ley de Protección '
+      'de Datos Personales del Perú.';
+  static const qrOfflineBadge = 'Sin conexión · generado en tu teléfono';
+  static const qrOfflineOtp = 'Código';
+  static const qrOfflineRenewPrefix = 'Cambia cada';
+  static const qrOfflineRenewSuffix = 'segundos, sin usar internet ni GPS.';
+  static const qrOfflineHelp =
+      'El guardia lo valida con su conexión. Si cambiaste la hora del '
+      'teléfono, conéctate para sincronizar.';
+  static const qrOfflineNotLinked =
+      'No hay conexión y este teléfono aún no está preparado para el QR sin '
+      'conexión. Conéctate a internet y abre esta pantalla una vez.';
+  static const showQrOffline = 'Mostrar mi QR sin conexión';
   static const qrValidUntil = 'Válido hasta las';
   static const qrAutoRenew = 'Se renueva automáticamente al vencer.';
   static const qrOneUse = 'Sirve una sola vez.';
@@ -76,7 +135,8 @@ final class AppStrings {
   static const historyAll = 'Todos';
   static const historyEntries = 'Ingresos';
   static const historyRejections = 'Rechazos';
-  static const historyEmpty = 'Todavía no hay ingresos ni rechazos registrados.';
+  static const historyEmpty =
+      'Todavía no hay ingresos ni rechazos registrados.';
   static const historyMore = 'Cargar más';
   static const historyAuthorized = 'Ingreso autorizado';
   static const historyDenied = 'Ingreso rechazado';
@@ -85,8 +145,32 @@ final class AppStrings {
       'Pide tu huella o rostro al abrir la app. Tu huella nunca sale del '
       'teléfono.';
   static const biometricsError = 'No se pudo cambiar el desbloqueo.';
+  static const lockedBadge = 'Autenticación biométrica';
   static const lockedTitle = 'Identidad digital bloqueada';
   static const lockedBody =
       'Confirma con tu huella, rostro o el PIN del teléfono para continuar.';
   static const unlock = 'Desbloquear';
+  static const notificationsTitle = 'Avisos';
+  static const notificationsEmpty = 'No tienes avisos.';
+  static const notificationsPendingPrefix = 'Tienes';
+  static const notificationsPendingSuffix = 'avisos sin leer';
+  static const notificationDetail = 'Detalle del aviso';
+  static const notificationCause = 'Causa';
+  static const notificationPlace = 'Puerta';
+  static const notificationWhen = 'Fecha y hora del intento';
+  static const notificationSupport = 'A quién acudir';
+  static const see = 'Ver';
+  static const notificationsDenials = 'Denegaciones';
+  static const notificationsAlerts = 'Alertas';
+  static const accessDenied = 'Acceso denegado';
+  static const securityAlert = 'Alerta de seguridad';
+  static const securityAlertHelp =
+      'Detectamos una señal de posible uso sospechoso de tu credencial. No '
+      'prueba un ataque, pero si no reconoces este intento, acude al canal de '
+      'soporte.';
+  static const alertsBannerOne = 'Tienes una alerta de seguridad sin leer';
+  static const alertsBannerManyPrefix = 'Tienes';
+  static const alertsBannerManySuffix = 'alertas de seguridad sin leer';
+  static const alertsBannerHelp = 'Revisa si reconoces el intento de ingreso.';
+  static const review = 'Revisar';
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
 import '../../../ubicacion/presentation/widgets/explicacion_ubicacion_dialog.dart';
 import '../states/codigo_qr_state.dart';
 import '../viewmodels/codigo_qr_view_model.dart';
@@ -11,9 +12,14 @@ class CodigoQrPage extends StatefulWidget {
     super.key,
     required this.viewModel,
     this.onVerAvisoPrivacidad,
+    this.iniciarSinConexion = false,
   });
 
   final CodigoQrViewModel viewModel;
+
+  /// Abre directamente el QR sin conexión (p. ej. desde el carné cuando no
+  /// hay internet), sin pedir ubicación.
+  final bool iniciarSinConexion;
 
   /// Abre el aviso de privacidad desde la explicación de la ubicación.
   final VoidCallback? onVerAvisoPrivacidad;
@@ -24,6 +30,17 @@ class CodigoQrPage extends StatefulWidget {
 
 class _CodigoQrPageState extends State<CodigoQrPage> {
   bool _ubicacionExplicada = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.iniciarSinConexion) {
+      Future<void>.microtask(widget.viewModel.generarSinConexion);
+    } else {
+      // Con internet, deja el teléfono listo para el QR sin conexión.
+      Future<void>.microtask(widget.viewModel.prepararSinConexion);
+    }
+  }
 
   @override
   void dispose() {
@@ -92,11 +109,15 @@ class _CodigoQrPageState extends State<CodigoQrPage> {
                 estado: visible,
                 alRevocar: _revocar,
               ),
+              CodigoQrOfflineVisible visible => _CodigoOfflineVisible(
+                estado: visible,
+              ),
               CodigoQrError(:final message) => _Mensaje(
                 icono: Icons.error_outline,
                 texto: message,
                 accion: AppStrings.retry,
                 alPulsar: _generar,
+                esError: true,
               ),
             };
           },
@@ -111,14 +132,28 @@ class _Cargando extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text(AppStrings.generatingQr, textAlign: TextAlign.center),
-        ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const _IconoCircular(icono: Icons.my_location),
+            const SizedBox(height: 24),
+            const SizedBox(
+              width: 180,
+              child: LinearProgressIndicator(minHeight: 4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.generatingQr,
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.textoSecundario),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -130,32 +165,75 @@ class _Mensaje extends StatelessWidget {
     required this.texto,
     required this.accion,
     required this.alPulsar,
+    this.esError = false,
   });
 
   final IconData icono;
   final String texto;
   final String accion;
   final Future<void> Function() alPulsar;
+  final bool esError;
 
   @override
   Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icono, size: 64),
-            const SizedBox(height: 16),
-            Text(texto, textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => alPulsar(),
-              icon: const Icon(Icons.qr_code),
-              label: Text(accion),
-            ),
-          ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: _IconoCircular(icono: icono, esError: esError),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                esError ? AppStrings.qrErrorTitle : AppStrings.qrPassTitle,
+                textAlign: TextAlign.center,
+                style: textos.headlineMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                texto,
+                textAlign: TextAlign.center,
+                style: textos.bodyLarge?.copyWith(
+                  color: AppColors.textoSecundario,
+                ),
+              ),
+              const SizedBox(height: 28),
+              FilledButton.icon(
+                onPressed: () => alPulsar(),
+                icon: Icon(esError ? Icons.refresh : Icons.qr_code),
+                label: Text(accion),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _IconoCircular extends StatelessWidget {
+  const _IconoCircular({required this.icono, this.esError = false});
+
+  final IconData icono;
+  final bool esError;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: esError ? AppColors.rojoFondo : AppColors.superficie,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        icono,
+        size: 48,
+        color: esError ? AppColors.rojoError : AppColors.azulUpt,
       ),
     );
   }
@@ -169,60 +247,130 @@ class _CodigoVisible extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
     final codigo = estado.codigo;
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        Center(
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(12),
-            child: QrImageView(
-              data: codigo.contenido,
-              size: 240,
-              backgroundColor: Colors.white,
-              semanticsLabel: AppStrings.qrTitle,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            Text(
+              AppStrings.qrPassTitle,
+              textAlign: TextAlign.center,
+              style: textos.headlineMedium,
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        CuentaRegresivaQr(
-          segundosRestantes: estado.segundosRestantes,
-          duracionSegundos: codigo.duracionSegundos,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${AppStrings.qrValidUntil} ${_hora(codigo.expiraEn)}',
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          codigo.unSoloUso
-              ? '${AppStrings.qrAutoRenew} ${AppStrings.qrOneUse}'
-              : AppStrings.qrAutoRenew,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.place_outlined),
-            title: Text(codigo.puntoAccesoNombre),
-          ),
-        ),
-        if (estado.mensaje != null)
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.warning_amber_outlined),
-              title: Text(estado.mensaje!),
+            const SizedBox(height: 4),
+            Text(
+              AppStrings.qrPassSubtitle,
+              textAlign: TextAlign.center,
+              style: textos.bodyMedium?.copyWith(
+                color: AppColors.textoSecundario,
+              ),
             ),
-          ),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: estado.revocando ? null : () => alRevocar(),
-          icon: const Icon(Icons.block),
-          label: const Text(AppStrings.revokeQr),
+            const SizedBox(height: 16),
+            // El QR va siempre sobre blanco y con margen para que el lector
+            // de la puerta lo detecte bien.
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(color: AppColors.azulUpt, width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A001244),
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: QrImageView(
+                  data: codigo.contenido,
+                  size: 240,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: AppColors.azulProfundo,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: AppColors.azulProfundo,
+                  ),
+                  semanticsLabel: AppStrings.qrTitle,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            CuentaRegresivaQr(
+              segundosRestantes: estado.segundosRestantes,
+              duracionSegundos: codigo.duracionSegundos,
+            ),
+            const SizedBox(height: 16),
+            _TarjetaQr(
+              children: [
+                _FilaDato(
+                  icono: Icons.schedule,
+                  titulo:
+                      '${AppStrings.qrValidUntil} ${_hora(codigo.expiraEn)}',
+                ),
+                const Divider(height: 20),
+                _FilaDato(
+                  icono: Icons.autorenew,
+                  titulo: codigo.unSoloUso
+                      ? '${AppStrings.qrAutoRenew} ${AppStrings.qrOneUse}'
+                      : AppStrings.qrAutoRenew,
+                ),
+                const Divider(height: 20),
+                _FilaDato(
+                  icono: Icons.door_front_door_outlined,
+                  etiqueta: AppStrings.qrAccessPoint,
+                  titulo: codigo.puntoAccesoNombre,
+                ),
+              ],
+            ),
+            if (estado.mensaje != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.doradoClaro,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_outlined,
+                      color: AppColors.dorado,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(estado.mensaje!)),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: estado.revocando ? null : () => alRevocar(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.rojoError,
+                side: const BorderSide(color: AppColors.rojoFondo),
+              ),
+              icon: const Icon(Icons.block),
+              label: const Text(AppStrings.revokeQr),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppStrings.revokeQrHelp,
+              textAlign: TextAlign.center,
+              style: textos.bodySmall?.copyWith(
+                color: AppColors.textoSecundario,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -230,6 +378,192 @@ class _CodigoVisible extends StatelessWidget {
     final local = fecha.toLocal();
     String dos(int n) => n.toString().padLeft(2, '0');
     return '${dos(local.hour)}:${dos(local.minute)}:${dos(local.second)}';
+  }
+}
+
+/// QR calculado en el teléfono. No hay botón "Anular": esa acción es para
+/// el QR en línea y necesita internet.
+class _CodigoOfflineVisible extends StatelessWidget {
+  const _CodigoOfflineVisible({required this.estado});
+
+  final CodigoQrOfflineVisible estado;
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    final codigo = estado.codigo;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            const Center(child: _InsigniaSinConexion()),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.qrPassTitle,
+              textAlign: TextAlign.center,
+              style: textos.headlineMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              AppStrings.qrPassSubtitle,
+              textAlign: TextAlign.center,
+              style: textos.bodyMedium?.copyWith(
+                color: AppColors.textoSecundario,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(color: AppColors.azulUpt, width: 2),
+                ),
+                child: QrImageView(
+                  data: codigo.contenido,
+                  size: 240,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: AppColors.azulProfundo,
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: AppColors.azulProfundo,
+                  ),
+                  semanticsLabel: AppStrings.qrTitle,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '${AppStrings.qrOfflineOtp}: '
+              '${codigo.otp.substring(0, 3)} ${codigo.otp.substring(3)}',
+              textAlign: TextAlign.center,
+              style: textos.titleMedium?.copyWith(
+                fontFamily: 'monospace',
+                letterSpacing: 2,
+                color: AppColors.azulProfundo,
+              ),
+            ),
+            const SizedBox(height: 16),
+            CuentaRegresivaQr(
+              segundosRestantes: estado.segundosRestantes,
+              duracionSegundos: codigo.periodoSegundos,
+            ),
+            const SizedBox(height: 16),
+            _TarjetaQr(
+              children: [
+                _FilaDato(
+                  icono: Icons.autorenew,
+                  titulo:
+                      '${AppStrings.qrOfflineRenewPrefix} '
+                      '${codigo.periodoSegundos} '
+                      '${AppStrings.qrOfflineRenewSuffix}',
+                ),
+                const Divider(height: 20),
+                const _FilaDato(
+                  icono: Icons.wifi_off,
+                  titulo: AppStrings.qrOfflineHelp,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InsigniaSinConexion extends StatelessWidget {
+  const _InsigniaSinConexion();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.doradoClaro,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off, size: 16, color: AppColors.dorado),
+          const SizedBox(width: 6),
+          Text(
+            AppStrings.qrOfflineBadge,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: AppColors.dorado,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TarjetaQr extends StatelessWidget {
+  const _TarjetaQr({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.bordeSuave),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _FilaDato extends StatelessWidget {
+  const _FilaDato({required this.icono, required this.titulo, this.etiqueta});
+
+  final IconData icono;
+  final String titulo;
+  final String? etiqueta;
+
+  @override
+  Widget build(BuildContext context) {
+    final textos = Theme.of(context).textTheme;
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.superficieBaja,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: Icon(icono, size: 20, color: AppColors.azulUpt),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (etiqueta != null)
+                Text(
+                  etiqueta!,
+                  style: textos.labelSmall?.copyWith(
+                    color: AppColors.textoSecundario,
+                  ),
+                ),
+              Text(titulo, style: textos.bodyMedium),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -248,6 +582,7 @@ class CuentaRegresivaQr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final esquema = Theme.of(context).colorScheme;
+    final textos = Theme.of(context).textTheme;
     final urgente = segundosRestantes <= 10;
     final color = urgente ? esquema.error : esquema.primary;
     final progreso = duracionSegundos <= 0
@@ -259,13 +594,26 @@ class CuentaRegresivaQr extends StatelessWidget {
         children: [
           Text(
             '$segundosRestantes ${AppStrings.secondsShort}',
-            style: Theme.of(
-              context,
-            ).textTheme.displaySmall?.copyWith(color: color),
+            style: textos.displaySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const Text(AppStrings.timeLeft),
+          Text(
+            AppStrings.timeLeft,
+            style: textos.labelMedium?.copyWith(
+              color: AppColors.textoSecundario,
+            ),
+          ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(value: progreso, color: color),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: progreso,
+              color: color,
+              minHeight: 8,
+            ),
+          ),
         ],
       ),
     );

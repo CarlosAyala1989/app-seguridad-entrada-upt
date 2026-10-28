@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../shared/l10n/app_strings.dart';
+import '../../../../shared/theme/app_theme.dart';
 
 /// Interruptor "Desbloquear con huella o rostro". No se muestra si el
 /// teléfono no tiene biometría (por ejemplo, en el navegador).
@@ -77,7 +78,17 @@ class _AjustesBiometriaTileState extends State<AjustesBiometriaTile> {
     if (!_disponible) return const SizedBox.shrink();
     return Card(
       child: SwitchListTile(
-        secondary: const Icon(Icons.fingerprint),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        secondary: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.superficieBaja,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: const Icon(Icons.fingerprint, color: AppColors.azulUpt),
+        ),
         title: const Text(AppStrings.biometricsTitle),
         subtitle: const Text(AppStrings.biometricsSubtitle),
         value: _activada,
