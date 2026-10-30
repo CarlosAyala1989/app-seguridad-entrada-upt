@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:aplicacion_estudiante/core/error/failure.dart';
 import 'package:aplicacion_estudiante/features/login_estudiante/domain/entities/flujo_login.dart';
 import 'package:aplicacion_estudiante/features/login_estudiante/domain/entities/sesion_estudiante.dart';
 import 'package:aplicacion_estudiante/features/login_estudiante/domain/entities/usuario.dart';
@@ -11,6 +12,11 @@ import 'package:aplicacion_estudiante/features/login_estudiante/presentation/sta
 import 'package:aplicacion_estudiante/features/login_estudiante/presentation/viewmodels/login_view_model.dart';
 
 final class FakeLoginEstudianteRepository implements LoginEstudianteRepository {
+  /// Respuestas que irá devolviendo `consultarEstadoGoogle`, en orden.
+  /// Si un elemento es un [Failure], se lanza en vez de devolverse.
+  final respuestasGoogle = <Object>[];
+  int consultasGoogle = 0;
+
   @override
   Future<CaptchaIntranet> obtenerCaptcha() async {
     return CaptchaIntranet(
@@ -52,7 +58,13 @@ final class FakeLoginEstudianteRepository implements LoginEstudianteRepository {
   Future<ResultadoEstadoGoogle> consultarEstadoGoogle(
     String transaccionId,
   ) async {
-    return const ResultadoEstadoGoogle(estado: EstadoGoogle.pendiente);
+    consultasGoogle++;
+    if (respuestasGoogle.isEmpty) {
+      return const ResultadoEstadoGoogle(estado: EstadoGoogle.pendiente);
+    }
+    final respuesta = respuestasGoogle.removeAt(0);
+    if (respuesta is Failure) throw respuesta;
+    return respuesta as ResultadoEstadoGoogle;
   }
 
   @override
@@ -119,6 +131,68 @@ void main() {
         expect(viewModel.estadoActual, isA<LoginErrorState>());
         final error = viewModel.estadoActual as LoginErrorState;
         expect(error.mensaje, contains('10 dígitos'));
+      },
+    );
+
+    test(
+      'un corte de red al consultar Google no aborta el inicio de sesión',
+      () async {
+        final usuario = Usuario(
+          id: 1,
+          codigoInstitucional: '2020000000',
+          correoInstitucional: 'ep2020000000@virtual.upt.pe',
+          nombres: 'ESTUDIANTE',
+          apellidos: 'DE PRUEBA',
+          roles: const ['ESTUDIANTE'],
+        );
+        repository.respuestasGoogle.addAll([
+          const NetworkFailure(),
+          ResultadoEstadoGoogle(
+            estado: EstadoGoogle.completa,
+            sesion: SesionEstudiante(
+              tipoToken: 'Bearer',
+              tokenAcceso: 'acceso',
+              tokenRenovacion: 'renovacion',
+              tokenAccesoExpiraEn: DateTime.now().add(
+                const Duration(minutes: 15),
+              ),
+              tokenRenovacionExpiraEn: DateTime.now().add(
+                const Duration(days: 7),
+              ),
+              usuario: usuario,
+            ),
+          ),
+        ]);
+
+        await viewModel.esperarResultadoGoogle(
+          transaccionId: 'google-trans-id',
+          expiraEn: DateTime.now().add(const Duration(minutes: 1)),
+        );
+
+        expect(repository.consultasGoogle, 2);
+        expect(viewModel.estadoActual, isA<LoginExitosoState>());
+      },
+    );
+
+    test(
+      'un error del servidor al consultar Google sí detiene el flujo',
+      () async {
+        repository.respuestasGoogle.add(
+          const ServerFailure('La transacción de Google no existe.'),
+        );
+
+        await viewModel.esperarResultadoGoogle(
+          transaccionId: 'google-trans-id',
+          expiraEn: DateTime.now().add(const Duration(minutes: 1)),
+        );
+
+        expect(repository.consultasGoogle, 1);
+        final estado = viewModel.estadoActual;
+        expect(estado, isA<LoginErrorState>());
+        expect(
+          (estado as LoginErrorState).mensaje,
+          'La transacción de Google no existe.',
+        );
       },
     );
   });
