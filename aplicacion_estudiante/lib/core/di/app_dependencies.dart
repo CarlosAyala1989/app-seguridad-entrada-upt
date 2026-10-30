@@ -205,6 +205,10 @@ final class AppDependencies {
       builder: (context) {
         return PerfilDigitalPage(
           viewModel: viewModel,
+          onGuardarSinConexion: PrepararQrOfflineUseCase(
+            repository: _qrOffline,
+            usuarioActual: _usuarioActual,
+          ).call,
           onVerCodigoQr: () => Navigator.of(
             context,
           ).push(MaterialPageRoute<void>(builder: (_) => buildCodigoQrPage())),

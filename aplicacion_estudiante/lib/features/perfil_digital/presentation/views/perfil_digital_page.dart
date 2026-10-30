@@ -19,6 +19,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.accionExtra,
     this.encabezado,
     this.onVerQrSinConexion,
+    this.onGuardarSinConexion,
   });
 
   final PerfilDigitalViewModel viewModel;
@@ -47,6 +48,7 @@ class PerfilDigitalPage extends StatefulWidget {
   /// Abre el QR sin conexión cuando no se pudo cargar la identidad (por
   /// ejemplo, sin internet). Si es `null` no se muestra el botón.
   final VoidCallback? onVerQrSinConexion;
+  final Future<bool> Function()? onGuardarSinConexion;
 
   @override
   State<PerfilDigitalPage> createState() => _PerfilDigitalPageState();
@@ -66,6 +68,28 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
   }
 
   bool _cerrando = false;
+  bool _guardando = false;
+
+  Future<void> _guardarSinConexion() async {
+    setState(() => _guardando = true);
+    var guardado = false;
+    try {
+      guardado = await widget.onGuardarSinConexion!();
+    } catch (_) {
+      guardado = false;
+    }
+    if (!mounted) return;
+    setState(() => _guardando = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          guardado
+              ? 'QR preparado para usar sin conexión.'
+              : 'No se pudo preparar el QR sin conexión. Inténtalo con internet.',
+        ),
+      ),
+    );
+  }
 
   Future<void> _confirmarCierre() async {
     if (_cerrando) return;
@@ -132,6 +156,10 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
                   onVerHistorial: widget.onVerHistorial,
                   ajustes: widget.ajustes,
                   onVerQrSinConexion: widget.onVerQrSinConexion,
+                  onGuardarSinConexion:
+                      widget.onGuardarSinConexion == null || _guardando
+                      ? null
+                      : _guardarSinConexion,
                 ),
               ),
             ),
@@ -150,6 +178,7 @@ class _StateBody extends StatelessWidget {
     this.onVerHistorial,
     this.ajustes,
     this.onVerQrSinConexion,
+    this.onGuardarSinConexion,
   });
 
   final PerfilDigitalState state;
@@ -158,6 +187,7 @@ class _StateBody extends StatelessWidget {
   final VoidCallback? onVerHistorial;
   final Widget? ajustes;
   final VoidCallback? onVerQrSinConexion;
+  final VoidCallback? onGuardarSinConexion;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +203,7 @@ class _StateBody extends StatelessWidget {
         onVerCodigoQr: onVerCodigoQr,
         onVerHistorial: onVerHistorial,
         ajustes: ajustes,
+        onGuardarSinConexion: onGuardarSinConexion,
       ),
       PerfilDigitalEmpty() => _EmptyState(onRetry: onReload),
       PerfilDigitalError(:final message, :final retry) => _ErrorState(
@@ -190,12 +221,14 @@ class _ProfileCard extends StatelessWidget {
     this.onVerCodigoQr,
     this.onVerHistorial,
     this.ajustes,
+    this.onGuardarSinConexion,
   });
 
   final PerfilDigital perfil;
   final VoidCallback? onVerCodigoQr;
   final VoidCallback? onVerHistorial;
   final Widget? ajustes;
+  final VoidCallback? onGuardarSinConexion;
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +266,14 @@ class _ProfileCard extends StatelessWidget {
                 onPressed: onVerHistorial,
                 icon: const Icon(Icons.history),
                 label: const Text(AppStrings.historyTitle),
+              ),
+            ],
+            if (onGuardarSinConexion != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onGuardarSinConexion,
+                icon: const Icon(Icons.offline_pin_outlined),
+                label: const Text('Guardar QR sin conexión'),
               ),
             ],
             if (ajustes != null) ...[const SizedBox(height: 20), ajustes!],
