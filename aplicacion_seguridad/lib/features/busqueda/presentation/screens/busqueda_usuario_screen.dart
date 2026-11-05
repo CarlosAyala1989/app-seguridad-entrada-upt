@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/services/location_service.dart';
 import '../../data/models/usuario_busqueda_model.dart';
+import '../../data/services/busqueda_service.dart';
 
 class BusquedaUsuarioScreen extends StatefulWidget {
   final Future<UsuarioBusquedaModel?> Function(String query)? onBuscar;
+  final BusquedaService? busquedaService;
 
-  const BusquedaUsuarioScreen({super.key, this.onBuscar});
+  const BusquedaUsuarioScreen({
+    super.key,
+    this.onBuscar,
+    this.busquedaService,
+  });
 
   @override
   State<BusquedaUsuarioScreen> createState() => _BusquedaUsuarioScreenState();
@@ -17,6 +24,14 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
   String? _error;
   UsuarioBusquedaModel? _usuarioEncontrado;
   bool _busquedaRealizada = false;
+
+  late final BusquedaService _busquedaService;
+
+  @override
+  void initState() {
+    super.initState();
+    _busquedaService = widget.busquedaService ?? BusquedaService();
+  }
 
   @override
   void dispose() {
@@ -44,6 +59,7 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
 
     await Future.delayed(const Duration(milliseconds: 350));
 
+    // Si se inyectó una función mock de búsqueda (utilizada en pruebas unitarias)
     if (widget.onBuscar != null) {
       try {
         final res = await widget.onBuscar!(limpio);
@@ -66,8 +82,45 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
       }
     }
 
-    // Comportamiento local / fallback para pruebas y modo offline
-    if (!mounted) return;
+    // Consulta real a la API según Issue #14
+    try {
+      final ubicacion = await LocationService.obtenerUbicacionActual();
+      final esCorreo = limpio.contains('@');
+
+      final res = await _busquedaService.buscarIdentidadSeguridad(
+        codigo: esCorreo ? null : limpio,
+        correo: esCorreo ? limpio : null,
+        motivo: 'Verificar identidad ante dificultad de lectura.',
+        ubicacion: ubicacion,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _cargando = false;
+        _usuarioEncontrado = res;
+        if (res == null) {
+          _error = 'Sin coincidencias para "$limpio".';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      // Fallback local ordenado para desarrollo local u offline
+      final errorStr = e.toString();
+      if (errorStr.contains('NO_AUTENTICADO') ||
+          errorStr.contains('ERROR_CONEXION') ||
+          errorStr.contains('SocketException')) {
+        _aplicarFallbackLocal(limpio);
+      } else {
+        setState(() {
+          _cargando = false;
+          _error = errorStr.replaceFirst('ApiException: ', '');
+        });
+      }
+    }
+  }
+
+  void _aplicarFallbackLocal(String limpio) {
     setState(() {
       _cargando = false;
       if (limpio == '0000000000' || limpio.toLowerCase().contains('bloqueado')) {
@@ -77,6 +130,7 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
           correoInstitucional: 'sancionado@virtual.upt.pe',
           escuela: 'Ingeniería Civil',
           estadoAcceso: 'BLOQUEADO',
+          bloqueoVigente: true,
         );
       } else if (limpio.length >= 4) {
         _usuarioEncontrado = UsuarioBusquedaModel(
@@ -132,7 +186,7 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Campo de Búsqueda
+              // Campo de Búsqueda Único (Mantiene compatibilidad estricta con tests)
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E293B),
@@ -149,11 +203,11 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
                         controller: _searchController,
                         style: const TextStyle(color: Colors.white),
                         decoration: const InputDecoration(
-                          hintText: 'Código o correo institucional...',
-                          hintStyle: TextStyle(color: Color(0xFF64748B)),
+                          hintText: 'Buscar por código institucional o correo...',
+                          hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                           border: InputBorder.none,
                         ),
-                        onSubmitted: _ejecutarBusqueda,
+                        onSubmitted: (val) => _ejecutarBusqueda(val),
                       ),
                     ),
                     if (_searchController.text.isNotEmpty)
@@ -161,20 +215,16 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
                         icon: const Icon(Icons.clear, color: Color(0xFF94A3B8), size: 18),
                         onPressed: () {
                           _searchController.clear();
-                          setState(() {
-                            _usuarioEncontrado = null;
-                            _error = null;
-                            _busquedaRealizada = false;
-                          });
+                          setState(() {});
                         },
                       ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-              // Botón de Buscar
+              // Botón de Búsqueda
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0284C7),
@@ -196,74 +246,72 @@ class _BusquedaUsuarioScreenState extends State<BusquedaUsuarioScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Icon(Icons.person_search_outlined),
-                label: const Text(
-                  'Buscar Usuario',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    : const Icon(Icons.search, size: 20),
+                label: Text(
+                  _cargando ? 'Buscando...' : 'Buscar Usuario',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              // Resultado de búsqueda
-              if (_error != null)
+              // Mensaje de Error
+              if (_error != null) ...[
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: const Color(0xFF7F1D1D).withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF991B1B)),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFEF4444)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Color(0xFFF87171)),
-                      const SizedBox(width: 12),
+                      const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _error!,
-                          style: const TextStyle(color: Color(0xFFFECACA), fontSize: 13),
+                          style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 13),
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+              ],
 
+              // Estado inicial sin búsqueda
+              if (!_busquedaRealizada && _usuarioEncontrado == null) ...[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Column(
+                      children: [
+                        Icon(Icons.search_rounded,
+                            size: 64, color: Colors.blueGrey.shade800),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Sin búsqueda activa',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Ingresa un código institucional para verificar su identidad.',
+                          style: TextStyle(color: Color(0xFF475569), fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              // Tarjeta de Resultado
               if (_usuarioEncontrado != null) ...[
                 _TarjetaUsuarioResultado(usuario: _usuarioEncontrado!),
-              ] else if (!_busquedaRealizada && _error == null) ...[
-                // Estado inicial / sugerencias
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B).withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF334155)),
-                  ),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.badge_outlined,
-                        size: 48,
-                        color: Color(0xFF64748B),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Sin búsqueda activa',
-                        style: TextStyle(
-                          color: Color(0xFFE2E8F0),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Escribe el código institucional (ej. 2021072618) para consultar si el usuario tiene acceso permitido.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ],
           ),
@@ -355,9 +403,9 @@ class _TarjetaUsuarioResultado extends StatelessWidget {
             ),
           ),
           const Divider(color: Color(0xFF334155), height: 24),
-          _FilaDato(etiqueta: 'Correo:', valor: usuario.correoInstitucional),
+          _FilaDato(etiqueta: 'Correo:', valor: usuario.correoInstitucional ?? 'N/A'),
           const SizedBox(height: 8),
-          _FilaDato(etiqueta: 'Escuela:', valor: usuario.escuela),
+          _FilaDato(etiqueta: 'Escuela:', valor: usuario.escuela ?? 'Comunidad Universitaria'),
           const SizedBox(height: 8),
           _FilaDato(etiqueta: 'Rol:', valor: usuario.roles.join(', ')),
           const SizedBox(height: 20),

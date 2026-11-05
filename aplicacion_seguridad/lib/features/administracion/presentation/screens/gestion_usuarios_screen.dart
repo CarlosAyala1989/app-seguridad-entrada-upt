@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../data/models/regla_acceso_model.dart';
+import '../../data/services/administracion_service.dart';
+
 class UsuarioPersonalModel {
   final String id;
   final String nombres;
@@ -48,13 +51,19 @@ class UsuarioPersonalModel {
 }
 
 class GestionUsuariosScreen extends StatefulWidget {
-  const GestionUsuariosScreen({super.key});
+  final AdministracionService? adminService;
+
+  const GestionUsuariosScreen({super.key, this.adminService});
 
   @override
   State<GestionUsuariosScreen> createState() => _GestionUsuariosScreenState();
 }
 
-class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
+class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late final AdministracionService _adminService;
+
   final List<UsuarioPersonalModel> _usuarios = [
     const UsuarioPersonalModel(
       id: '1',
@@ -89,6 +98,47 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   ];
 
   String _filtroEstado = 'TODOS'; // 'TODOS', 'ACTIVO', 'INACTIVO'
+
+  // Estado para Bloqueos de Identidad (Issue #20)
+  final TextEditingController _searchUsuarioCtrl = TextEditingController();
+  List<Map<String, dynamic>> _usuariosAdminEncontrados = [];
+  bool _buscandoAdminUsuarios = false;
+
+  // Estado para Reglas de Acceso (Issue #22)
+  List<ReglaAccesoModel> _reglasAcceso = [];
+  bool _cargandoReglas = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _adminService = widget.adminService ?? AdministracionService();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+      if (_tabController.index == 2 && _reglasAcceso.isEmpty) {
+        _cargarReglasAcceso();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchUsuarioCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _cargarReglasAcceso() async {
+    setState(() => _cargandoReglas = true);
+    try {
+      final reglas = await _adminService.consultarReglasAcceso();
+      if (mounted) setState(() => _reglasAcceso = reglas);
+    } catch (_) {
+      // Entorno offline / mock
+    } finally {
+      if (mounted) setState(() => _cargandoReglas = false);
+    }
+  }
 
   void _abrirModalRegistro([UsuarioPersonalModel? usuarioAEditar]) {
     final formKey = GlobalKey<FormState>();
@@ -195,7 +245,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                               label: 'Nombres',
                               hint: 'Ej. Juan',
                               validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Obligatorio'
+                                   ? 'Obligatorio'
                                   : null,
                             ),
                           ),
@@ -392,6 +442,104 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
     }
   }
 
+  // --- Modal para Bloquear Usuario (Issue #20) ---
+  void _mostrarModalBloqueo(Map<String, dynamic> usuario) {
+    final messenger = ScaffoldMessenger.of(context);
+    final motivoCtrl = TextEditingController();
+    bool indefinido = true;
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDlgState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: Text(
+            'Bloquear Identidad de ${usuario['nombres'] ?? 'Usuario'}',
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Un bloqueo revoca sesiones, QR y secretos offline del titular. Requiere motivo de 10 a 500 caracteres y confirmación.',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: motivoCtrl,
+                  maxLines: 3,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'Motivo del bloqueo (Confidencial)',
+                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  validator: (v) {
+                    final t = (v ?? '').trim();
+                    if (t.length < 10) return 'Mínimo 10 caracteres';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                CheckboxListTile(
+                  title: const Text('Bloqueo por tiempo indefinido',
+                      style: TextStyle(color: Colors.white, fontSize: 13)),
+                  value: indefinido,
+                  onChanged: (v) => setDlgState(() => indefinido = v ?? true),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                Navigator.pop(ctx);
+                try {
+                  final uId = usuario['id'] as int;
+                  await _adminService.bloquearUsuario(
+                    usuarioId: uId,
+                    motivo: motivoCtrl.text.trim(),
+                    vigenteHasta: indefinido
+                        ? null
+                        : DateTime.now().add(const Duration(days: 7)),
+                  );
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Identidad bloqueada exitosamente.'),
+                      backgroundColor: Color(0xFF10B981),
+                    ),
+                  );
+                } catch (e) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Error al bloquear: $e'),
+                      backgroundColor: Colors.red.shade700,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Confirmar Bloqueo', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final usuariosFiltrados = _usuarios.where((u) {
@@ -414,200 +562,348 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF0284C7),
-        icon: const Icon(Icons.shield_outlined, color: Colors.white),
-        label: const Text(
-          'Nuevo Guardia',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF38BDF8),
+          labelColor: const Color(0xFF38BDF8),
+          unselectedLabelColor: const Color(0xFF94A3B8),
+          tabs: const [
+            Tab(text: 'Guardias', icon: Icon(Icons.shield_outlined, size: 20)),
+            Tab(text: 'Bloqueos (US-20)', icon: Icon(Icons.lock_clock, size: 20)),
+            Tab(text: 'Reglas (US-22)', icon: Icon(Icons.rule_folder_outlined, size: 20)),
+          ],
         ),
-        onPressed: () => _abrirModalRegistro(),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Resumen y Filtros
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              color: const Color(0xFF1E293B).withValues(alpha: 0.5),
-              child: Row(
+      floatingActionButton: _tabController.index == 0
+          ? FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF0284C7),
+              icon: const Icon(Icons.shield_outlined, color: Colors.white),
+              label: const Text(
+                'Nuevo Guardia',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () => _abrirModalRegistro(),
+            )
+          : null,
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // PESTAÑA 1: Guardias de Seguridad (Vista original 100% compatible con pruebas)
+          SafeArea(
+            child: Column(
+              children: [
+                // Resumen y Filtros
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  color: const Color(0xFF1E293B).withValues(alpha: 0.5),
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Filtrar:',
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                      ),
+                      const SizedBox(width: 12),
+                      _ChipFiltro(
+                        label: 'Todos (${_usuarios.length})',
+                        seleccionado: _filtroEstado == 'TODOS',
+                        onTap: () => setState(() => _filtroEstado = 'TODOS'),
+                      ),
+                      const SizedBox(width: 8),
+                      _ChipFiltro(
+                        label: 'Activos ($totalActivos)',
+                        seleccionado: _filtroEstado == 'ACTIVO',
+                        onTap: () => setState(() => _filtroEstado = 'ACTIVO'),
+                      ),
+                      const SizedBox(width: 8),
+                      _ChipFiltro(
+                        label: 'Inactivos (${_usuarios.length - totalActivos})',
+                        seleccionado: _filtroEstado == 'INACTIVO',
+                        onTap: () => setState(() => _filtroEstado = 'INACTIVO'),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Lista de Guardias
+                Expanded(
+                  child: usuariosFiltrados.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No se encontraron guardias con ese filtro.',
+                            style: TextStyle(color: Color(0xFF94A3B8)),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
+                          itemCount: usuariosFiltrados.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final u = usuariosFiltrados[index];
+                            final activo = u.esActivo;
+
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E293B),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: activo
+                                      ? const Color(0xFF334155)
+                                      : const Color(0xFF991B1B).withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 22,
+                                        backgroundColor: activo
+                                            ? const Color(0xFF0284C7).withValues(alpha: 0.2)
+                                            : const Color(0xFFEF4444).withValues(alpha: 0.2),
+                                        child: Icon(
+                                          Icons.person,
+                                          color: activo
+                                              ? const Color(0xFF38BDF8)
+                                              : const Color(0xFFEF4444),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              u.nombreCompleto,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Usuario: ${u.usuario} · ${u.correo}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF94A3B8),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: activo
+                                              ? const Color(0xFF16A34A).withValues(alpha: 0.2)
+                                              : const Color(0xFFEF4444).withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: activo
+                                                ? const Color(0xFF16A34A)
+                                                : const Color(0xFFEF4444),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          u.estado,
+                                          style: TextStyle(
+                                            color: activo
+                                                ? const Color(0xFF4ADE80)
+                                                : const Color(0xFFF87171),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(color: Color(0xFF334155), height: 20),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.door_front_door_outlined,
+                                          size: 16, color: Color(0xFF94A3B8)),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Asignación: ${u.puertaAsignada}',
+                                          style: const TextStyle(
+                                            color: Color(0xFFCBD5E1),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit,
+                                            size: 18, color: Color(0xFF38BDF8)),
+                                        tooltip: 'Editar guardia',
+                                        onPressed: () => _abrirModalRegistro(u),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          activo ? Icons.block : Icons.check_circle,
+                                          size: 18,
+                                          color: activo ? Colors.orange : Colors.green,
+                                        ),
+                                        tooltip: activo ? 'Deshabilitar' : 'Habilitar',
+                                        onPressed: () => _toggleEstado(u),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+
+          // PESTAÑA 2: Búsqueda y Bloqueo de Identidades (Issues #19 y #20)
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 children: [
-                  const Text(
-                    'Filtrar:',
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  TextField(
+                    controller: _searchUsuarioCtrl,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar usuario por código o correo...',
+                      hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF38BDF8)),
+                      filled: true,
+                      fillColor: const Color(0xFF1E293B),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.search, color: Color(0xFF38BDF8)),
+                        onPressed: () async {
+                          final q = _searchUsuarioCtrl.text.trim();
+                          if (q.isEmpty) return;
+                          final messenger = ScaffoldMessenger.of(context);
+                          setState(() => _buscandoAdminUsuarios = true);
+                          try {
+                            final res = await _adminService.consultarUsuariosAdmin(buscar: q);
+                            if (mounted) setState(() => _usuariosAdminEncontrados = res);
+                          } catch (e) {
+                            messenger.showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          } finally {
+                            if (mounted) setState(() => _buscandoAdminUsuarios = false);
+                          }
+                        },
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  _ChipFiltro(
-                    label: 'Todos (${_usuarios.length})',
-                    seleccionado: _filtroEstado == 'TODOS',
-                    onTap: () => setState(() => _filtroEstado = 'TODOS'),
-                  ),
-                  const SizedBox(width: 8),
-                  _ChipFiltro(
-                    label: 'Activos ($totalActivos)',
-                    seleccionado: _filtroEstado == 'ACTIVO',
-                    onTap: () => setState(() => _filtroEstado = 'ACTIVO'),
-                  ),
-                  const SizedBox(width: 8),
-                  _ChipFiltro(
-                    label: 'Inactivos (${_usuarios.length - totalActivos})',
-                    seleccionado: _filtroEstado == 'INACTIVO',
-                    onTap: () => setState(() => _filtroEstado = 'INACTIVO'),
-                  ),
+                  const SizedBox(height: 12),
+                  if (_buscandoAdminUsuarios)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    Expanded(
+                      child: _usuariosAdminEncontrados.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Ingresa un código o correo institucional para buscar.',
+                                style: TextStyle(color: Color(0xFF64748B)),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: _usuariosAdminEncontrados.length,
+                              itemBuilder: (context, i) {
+                                final usr = _usuariosAdminEncontrados[i];
+                                return Card(
+                                  color: const Color(0xFF1E293B),
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  child: ListTile(
+                                    leading: const Icon(Icons.person, color: Color(0xFF38BDF8)),
+                                    title: Text(
+                                      '${usr['nombres'] ?? ''} ${usr['apellidos'] ?? ''}',
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Text(
+                                      'Cód: ${usr['codigo_institucional']} · Estado: ${usr['estado']}',
+                                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                    ),
+                                    trailing: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFEF4444),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      ),
+                                      onPressed: () => _mostrarModalBloqueo(usr),
+                                      child: const Text('Bloquear', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
                 ],
               ),
             ),
+          ),
 
-            // Lista de guardias
-            Expanded(
-              child: usuariosFiltrados.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.shield_outlined,
-                              size: 48, color: Color(0xFF475569)),
-                          SizedBox(height: 12),
-                          Text(
-                            'No se encontraron guardias registrados',
-                            style: TextStyle(
-                                color: Color(0xFF94A3B8), fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: usuariosFiltrados.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final u = usuariosFiltrados[index];
-                        final colorRol = const Color(0xFF38BDF8);
-
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: u.esActivo
-                                  ? const Color(0xFF334155)
-                                  : Colors.orange.withValues(alpha: 0.3),
+          // PESTAÑA 3: Reglas Configurables de Acceso (Issue #22)
+          SafeArea(
+            child: _cargandoReglas
+                ? const Center(child: CircularProgressIndicator())
+                : _reglasAcceso.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.rule_outlined, size: 48, color: Color(0xFF64748B)),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Sin reglas adicionales cargadas.',
+                              style: TextStyle(color: Color(0xFF94A3B8)),
                             ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: colorRol.withValues(alpha: 0.15),
-                                child: const Icon(
-                                  Icons.shield,
-                                  color: Color(0xFF38BDF8),
-                                  size: 26,
+                            const SizedBox(height: 10),
+                            ElevatedButton.icon(
+                              onPressed: _cargarReglasAcceso,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Cargar Reglas del Servidor'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _reglasAcceso.length,
+                        itemBuilder: (context, i) {
+                          final r = _reglasAcceso[i];
+                          return Card(
+                            color: const Color(0xFF1E293B),
+                            margin: const EdgeInsets.only(bottom: 10),
+                            child: ListTile(
+                              leading: Icon(
+                                r.esPermitir ? Icons.check_circle : Icons.block,
+                                color: r.esPermitir ? Colors.green : Colors.red,
+                              ),
+                              title: Text(
+                                r.nombre,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                '${r.rol} · ${r.accion} · Horario: ${r.horaInicio} - ${r.horaFin}',
+                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                              ),
+                              trailing: Text(
+                                r.activo ? 'ACTIVA' : 'INACTIVA',
+                                style: TextStyle(
+                                  color: r.activo ? Colors.green : Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
                                 ),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            u.nombreCompleto,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                        InkWell(
-                                          onTap: () => _toggleEstado(u),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 3),
-                                            decoration: BoxDecoration(
-                                              color: u.esActivo
-                                                  ? const Color(0xFF16A34A)
-                                                      .withValues(alpha: 0.2)
-                                                  : Colors.orange
-                                                      .withValues(alpha: 0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: u.esActivo
-                                                    ? const Color(0xFF16A34A)
-                                                    : Colors.orange,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              u.estado,
-                                              style: TextStyle(
-                                                color: u.esActivo
-                                                    ? const Color(0xFF4ADE80)
-                                                    : Colors.orange,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Usuario: ${u.usuario} · ${u.correo}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF94A3B8),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                            Icons.door_front_door_outlined,
-                                            size: 14,
-                                            color: Color(0xFF64748B)),
-                                        const SizedBox(width: 4),
-                                        Expanded(
-                                          child: Text(
-                                            u.puertaAsignada,
-                                            style: const TextStyle(
-                                              color: Color(0xFFCBD5E1),
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.edit_outlined,
-                                              size: 18,
-                                              color: Color(0xFF94A3B8)),
-                                          onPressed: () =>
-                                              _abrirModalRegistro(u),
-                                          tooltip: 'Editar guardia',
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }
@@ -638,7 +934,7 @@ class _ChipFiltro extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: seleccionado
-                ? const Color(0xFF0284C7)
+                ? const Color(0xFF38BDF8)
                 : const Color(0xFF334155),
           ),
         ),
@@ -647,8 +943,7 @@ class _ChipFiltro extends StatelessWidget {
           style: TextStyle(
             color: seleccionado ? Colors.white : const Color(0xFF94A3B8),
             fontSize: 12,
-            fontWeight:
-                seleccionado ? FontWeight.bold : FontWeight.normal,
+            fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
@@ -694,8 +989,7 @@ class _CampoTextoModal extends StatelessWidget {
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle:
-                const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
             filled: true,
             fillColor: const Color(0xFF0F172A),
             contentPadding:
@@ -713,10 +1007,6 @@ class _CampoTextoModal extends StatelessWidget {
               borderSide: const BorderSide(color: Color(0xFF0284C7)),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFEF4444)),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFFEF4444)),
             ),

@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/services/location_service.dart';
+import '../../../incidencias/presentation/dialogs/registrar_incidencia_dialog.dart';
+import '../../../turnos/data/models/turno_model.dart';
+import '../../../turnos/data/services/turnos_service.dart';
 import '../../data/models/registro_historial_model.dart';
+import '../../data/services/historial_service.dart';
 
 class HistorialValidacionesScreen extends StatefulWidget {
-  const HistorialValidacionesScreen({super.key});
+  final HistorialService? historialService;
+  final TurnosService? turnosService;
+
+  const HistorialValidacionesScreen({
+    super.key,
+    this.historialService,
+    this.turnosService,
+  });
 
   @override
   State<HistorialValidacionesScreen> createState() =>
@@ -16,15 +29,51 @@ class _HistorialValidacionesScreenState
   final TextEditingController _searchController = TextEditingController();
   String _busqueda = '';
 
+  late final HistorialService _historialService;
+  late final TurnosService _turnosService;
+
+  bool _cargando = false;
+  TurnoModel? _turnoActual;
+
   @override
   void initState() {
     super.initState();
+    _historialService = widget.historialService ?? HistorialService();
+    _turnosService = widget.turnosService ?? TurnosService();
+
+    // Inicializamos con registros locales demostrativos para pruebas inmediatas y modo offline
     _registros = RegistroHistorialModel.obtenerRegistrosIniciales();
+
     _searchController.addListener(() {
       setState(() {
         _busqueda = _searchController.text.trim().toLowerCase();
       });
     });
+
+    _cargarDatosRemotos();
+  }
+
+  Future<void> _cargarDatosRemotos() async {
+    try {
+      final turno = await _turnosService.consultarTurnoActual();
+      if (mounted) setState(() => _turnoActual = turno);
+
+      final ubicacion = await LocationService.obtenerUbicacionActual();
+      final remotos = await _historialService.consultarIngresosRecientes(
+        ubicacion: ubicacion,
+        puntoAccesoCodigo: 'PUERTA-PRINCIPAL',
+        turnoId: turno?.id,
+      );
+
+      if (mounted && remotos.isNotEmpty) {
+        setState(() {
+          _registros = remotos;
+        });
+      }
+    } catch (_) {
+      // Si la API remota no está accesible o se ejecuta en entorno de prueba sin backend,
+      // se conservan los datos de la lista demostrativa inicial.
+    }
   }
 
   @override
@@ -58,10 +107,11 @@ class _HistorialValidacionesScreenState
   int get _totalDenegados =>
       _registros.where((r) => !r.esAutorizado).length;
 
-  void _recargarHistorial() {
-    setState(() {
-      _registros = RegistroHistorialModel.obtenerRegistrosIniciales();
-    });
+  Future<void> _recargarHistorial() async {
+    setState(() => _cargando = true);
+    await _cargarDatosRemotos();
+    if (!mounted) return;
+    setState(() => _cargando = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Historial de validaciones actualizado'),
@@ -69,6 +119,79 @@ class _HistorialValidacionesScreenState
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _gestionarTurno() async {
+    if (_turnoActual == null) {
+      // Iniciar nuevo turno
+      try {
+        final ubicacion = await LocationService.obtenerUbicacionActual();
+        final nuevoTurno = await _turnosService.iniciarTurno(ubicacion);
+        if (!mounted) return;
+        setState(() => _turnoActual = nuevoTurno);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Turno #${nuevoTurno.id} iniciado exitosamente.'),
+            backgroundColor: const Color(0xFF10B981),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo iniciar el turno: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } else {
+      // Cerrar turno activo
+      final confirmar = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: const Text('¿Cerrar turno activo?',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Text(
+            'Se cerrará el turno #${_turnoActual!.id}. Las siguientes validaciones no se vincularán a este turno.',
+            style: const TextStyle(color: Color(0xFFCBD5E1)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Cerrar Turno', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmar == true) {
+        try {
+          await _turnosService.cerrarTurno(_turnoActual!.id);
+          if (!mounted) return;
+          setState(() => _turnoActual = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Turno cerrado correctamente.'),
+              backgroundColor: Color(0xFF0284C7),
+            ),
+          );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No se pudo cerrar el turno: $e'),
+              backgroundColor: Colors.red.shade700,
+            ),
+          );
+        }
+      }
+    }
   }
 
   String _formatearHora(DateTime fecha) {
@@ -162,11 +285,43 @@ class _HistorialValidacionesScreenState
               _buildInfoFila('Punto de Acceso:', reg.puntoAccesoNombre),
               const SizedBox(height: 8),
               _buildInfoFila('Hora de registro:', _formatearHora(reg.fechaHora)),
+              if (reg.turnoId != null) ...[
+                const SizedBox(height: 8),
+                _buildInfoFila('Turno ID:', '#${reg.turnoId}'),
+              ],
               if (reg.observacion != null) ...[
                 const SizedBox(height: 8),
                 _buildInfoFila('Observación:', reg.observacion!),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // Botón para registrar incidencia vinculada (Issue #16)
+              if (reg.idNumerico != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFF59E0B)),
+                      foregroundColor: const Color(0xFFF59E0B),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    icon: const Icon(Icons.report_problem_outlined, size: 18),
+                    label: const Text('Registrar Incidencia'),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      RegistrarIncidenciaDialog.mostrar(
+                        context,
+                        registroId: reg.idNumerico!,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -271,6 +426,36 @@ class _HistorialValidacionesScreenState
                     ),
                   ),
                 ),
+                // Botón de control de turno de guardia (Issue #18)
+                InkWell(
+                  onTap: _gestionarTurno,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _turnoActual != null
+                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                          : const Color(0xFF38BDF8).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _turnoActual != null
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF38BDF8),
+                      ),
+                    ),
+                    child: Text(
+                      _turnoActual != null
+                          ? 'Turno #${_turnoActual!.id} (Activo)'
+                          : 'Iniciar Turno',
+                      style: TextStyle(
+                        color: _turnoActual != null
+                            ? const Color(0xFF4ADE80)
+                            : const Color(0xFF38BDF8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -363,29 +548,33 @@ class _HistorialValidacionesScreenState
 
           // Lista de Registros
           Expanded(
-            child: registros.isEmpty
+            child: _cargando
                 ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.history_outlined, size: 48, color: Color(0xFF475569)),
-                        SizedBox(height: 12),
-                        Text(
-                          'No se encontraron validaciones',
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-                        ),
-                      ],
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF38BDF8)),
                   )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: registros.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final reg = registros[index];
-                      return _buildTarjetaHistorial(reg);
-                    },
-                  ),
+                : registros.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.history_outlined, size: 48, color: Color(0xFF475569)),
+                            SizedBox(height: 12),
+                            Text(
+                              'No se encontraron validaciones',
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: registros.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final reg = registros[index];
+                          return _buildTarjetaHistorial(reg);
+                        },
+                      ),
           ),
         ],
       ),
@@ -490,9 +679,11 @@ class _HistorialValidacionesScreenState
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                esAutorizado ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                esAutorizado
+                    ? Icons.check_circle_rounded
+                    : Icons.cancel_rounded,
                 color: color,
-                size: 24,
+                size: 20,
               ),
             ),
             const SizedBox(width: 12),
@@ -503,81 +694,73 @@ class _HistorialValidacionesScreenState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                      Expanded(
                         child: Text(
-                          esAutorizado ? 'PERMITIDO' : 'DENEGADO',
-                          style: TextStyle(
-                            color: esAutorizado
-                                ? const Color(0xFF4ADE80)
-                                : const Color(0xFFF87171),
-                            fontSize: 11,
+                          reg.nombreCompleto ?? 'Identidad Protegida',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
                         _formatearHora(reg.fechaHora),
                         style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF64748B),
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  if (esAutorizado && reg.nombreCompleto != null) ...[
-                    Text(
-                      reg.nombreCompleto!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Cód: ${reg.codigoInstitucional ?? 'N/A'}',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Código: ${reg.codigoInstitucional ?? 'N/A'} · ${reg.escuela ?? ''}',
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 12,
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          esAutorizado ? 'PERMITIDO' : 'DENEGADO',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
-                    ),
-                  ] else ...[
-                    Text(
-                      reg.motivoLegible,
-                      style: const TextStyle(
-                        color: Color(0xFFFCA5A5),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (reg.observacion != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        reg.observacion!,
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 12,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          reg.motivoLegible,
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 6),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFF64748B),
-              size: 20,
-            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, color: Color(0xFF475569), size: 18),
           ],
         ),
       ),

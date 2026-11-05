@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../incidencias/presentation/dialogs/registrar_incidencia_dialog.dart';
 import '../../data/models/resultado_validacion_model.dart';
 
 class ResultadoValidacionScreen extends StatelessWidget {
@@ -27,6 +28,11 @@ class ResultadoValidacionScreen extends StatelessWidget {
       case 'USUARIO_INACTIVO':
       case 'USUARIO_BLOQUEADO':
         return 'El usuario se encuentra temporalmente inhabilitado o bloqueado.';
+      case 'FUERA_HORARIO_PERMITIDO':
+      case 'REGLA_ACCESO_DENEGADA':
+        return 'El ingreso no está permitido para este rol o en el horario actual.';
+      case 'DATOS_IDENTIDAD_INCOMPLETOS':
+        return 'Faltan datos institucionales mínimos para validar la identidad.';
       default:
         return resultado.mensaje.isNotEmpty
             ? resultado.mensaje
@@ -63,11 +69,11 @@ class ResultadoValidacionScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Ícono de estado grande y animable visualmente
+              // Ícono de estado grande y animado visualmente
               Center(
                 child: Container(
-                  width: 110,
-                  height: 110,
+                  width: 100,
+                  height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: colorPrincipal.withValues(alpha: 0.15),
@@ -75,7 +81,7 @@ class ResultadoValidacionScreen extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(
                         color: colorPrincipal.withValues(alpha: 0.25),
-                        blurRadius: 20,
+                        blurRadius: 18,
                         spreadRadius: 2,
                       ),
                     ],
@@ -83,19 +89,19 @@ class ResultadoValidacionScreen extends StatelessWidget {
                   child: Icon(
                     autorizado ? Icons.check_circle_rounded : Icons.cancel_rounded,
                     color: colorPrincipal,
-                    size: 64,
+                    size: 58,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Título de Decisión Claro (US-09)
+              // Título de Decisión Claro (US-09 e Issue #9)
               Text(
                 autorizado ? 'INGRESO PERMITIDO' : 'INGRESO NO PERMITIDO',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.8,
                   color: colorPrincipal,
@@ -109,15 +115,46 @@ class ResultadoValidacionScreen extends StatelessWidget {
                 _describirMotivo(resultado.motivo),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   color: Color(0xFFCBD5E1),
                   height: 1.4,
                 ),
               ),
 
-              const SizedBox(height: 28),
+              // Acción sugerida ante la decisión (Issue #15)
+              if (resultado.accionSugerida != null &&
+                  resultado.accionSugerida!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF334155).withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF475569)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lightbulb_outline,
+                          color: Color(0xFFFBBF24), size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          resultado.accionSugerida!,
+                          style: const TextStyle(
+                            color: Color(0xFFE2E8F0),
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
-              // Tarjeta de Identidad (Sólo si está AUTORIZADO)
+              const SizedBox(height: 24),
+
+              // Tarjeta de Identidad (Sólo si está AUTORIZADO - Issue #24)
               if (autorizado && identidad != null) ...[
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -131,14 +168,48 @@ class ResultadoValidacionScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor:
-                                const Color(0xFF0284C7).withValues(alpha: 0.2),
-                            child: const Icon(
-                              Icons.person,
-                              size: 34,
-                              color: Color(0xFF38BDF8),
+                          ClipOval(
+                            child: SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: (identidad.fotoUrl != null &&
+                                      identidad.fotoUrl!.isNotEmpty)
+                                  ? Image.network(
+                                      identidad.fotoUrl!,
+                                      fit: BoxFit.cover,
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return const Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Color(0xFF38BDF8),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          Container(
+                                        color: const Color(0xFF334155),
+                                        child: const Icon(
+                                          Icons.person,
+                                          size: 36,
+                                          color: Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      color: const Color(0xFF0284C7)
+                                          .withValues(alpha: 0.2),
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 36,
+                                        color: Color(0xFF38BDF8),
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -149,7 +220,7 @@ class ResultadoValidacionScreen extends StatelessWidget {
                                 Text(
                                   identidad.nombreCompleto,
                                   style: const TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -169,7 +240,8 @@ class ResultadoValidacionScreen extends StatelessWidget {
                         ],
                       ),
                       const Divider(color: Color(0xFF334155), height: 28),
-                      if (identidad.escuela != null && identidad.escuela!.isNotEmpty) ...[
+                      if (identidad.escuela != null &&
+                          identidad.escuela!.isNotEmpty) ...[
                         _ItemDato(
                           etiqueta: 'Escuela / Carrera:',
                           valor: identidad.escuela!,
@@ -184,7 +256,7 @@ class ResultadoValidacionScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                       ],
                       _ItemDato(
-                        etiqueta: 'Rol:',
+                        etiqueta: 'Tipo de usuario:',
                         valor: identidad.tiposUsuario.join(', '),
                       ),
                     ],
@@ -193,7 +265,7 @@ class ResultadoValidacionScreen extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
 
-              // Tarjeta de causa si está DENEGADO (US-12)
+              // Tarjeta de causa si está DENEGADO (Issue #15)
               if (!autorizado) ...[
                 Container(
                   padding: const EdgeInsets.all(18),
@@ -268,7 +340,37 @@ class ResultadoValidacionScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              // Botón para Registrar Incidencia (Issue #16)
+              if (resultado.registroId != null) ...[
+                OutlinedButton.icon(
+                  onPressed: () {
+                    RegistrarIncidenciaDialog.mostrar(
+                      context,
+                      registroId: resultado.registroId!,
+                    );
+                  },
+                  icon: const Icon(Icons.report_problem_outlined,
+                      color: Color(0xFFF59E0B), size: 20),
+                  label: const Text(
+                    'Registrar Incidencia de esta Validación',
+                    style: TextStyle(
+                      color: Color(0xFFF59E0B),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFF59E0B)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // Botón principal de acción
               ElevatedButton.icon(

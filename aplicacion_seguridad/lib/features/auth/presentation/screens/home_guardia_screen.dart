@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../administracion/presentation/screens/gestion_usuarios_screen.dart';
 import '../../../busqueda/presentation/screens/busqueda_usuario_screen.dart';
 import '../../../historial/presentation/screens/historial_validaciones_screen.dart';
+import '../../../validacion/presentation/screens/escaner_qr_screen.dart';
 import '../../domain/role_policy.dart';
 import '../controllers/auth_controller.dart';
 
@@ -245,6 +246,34 @@ class HomeGuardiaScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    // Botón Principal para Escanear Credencial QR (Issue #10)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0284C7),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 4,
+                        ),
+                        icon: const Icon(Icons.qr_code_scanner_rounded, size: 22),
+                        label: const Text(
+                          'Escanear Credencial QR',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const EscanerQrScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     // Botón para Búsqueda Manual de Usuario
                     SizedBox(
                       width: double.infinity,
