@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/storage/secure_storage_service.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 import '../../data/models/regla_acceso_model.dart';
 import '../../data/services/administracion_service.dart';
 
@@ -119,6 +121,86 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
         _cargarReglasAcceso();
       }
     });
+    _cargarGuardias();
+  }
+
+  Future<void> _cargarGuardias() async {
+    // 1. Intentar consultar guardias en el backend (requiere token activo)
+    try {
+      final guardiasServidor = await _adminService.consultarGuardias();
+      if (guardiasServidor.isNotEmpty && mounted) {
+        setState(() {
+          for (final g in guardiasServidor) {
+            final usuarioCod = (g['usuario'] as String? ?? '').trim();
+            final nombres = (g['nombres'] as String? ?? '').trim();
+            final apellidos = (g['apellidos'] as String? ?? '').trim();
+            final id = g['id']?.toString() ?? usuarioCod;
+
+            final existe = _usuarios.any((u) =>
+                u.id == id ||
+                (usuarioCod.isNotEmpty &&
+                    u.usuario.toUpperCase() == usuarioCod.toUpperCase()));
+
+            if (!existe && (nombres.isNotEmpty || usuarioCod.isNotEmpty)) {
+              _usuarios.add(
+                UsuarioPersonalModel(
+                  id: id,
+                  nombres: nombres.isNotEmpty ? nombres : 'Personal',
+                  apellidos: apellidos,
+                  usuario: usuarioCod,
+                  correo: g['correo'] as String? ??
+                      (usuarioCod.isNotEmpty
+                          ? '$usuarioCod@virtual.upt.pe'
+                          : 'seguridad@virtual.upt.pe'),
+                  rol: 'GUARDIA',
+                  puertaAsignada: g['punto_acceso_nombre'] as String? ??
+                      'Puerta Principal - Campus Capanique',
+                  estado: (g['estado'] as String? ?? 'ACTIVO').toUpperCase(),
+                ),
+              );
+            }
+          }
+        });
+      }
+    } catch (_) {
+      // Si el token no tiene rol administrador o está offline, no interrumpe
+    }
+
+    // 2. Comprobar la sesión activa del usuario autenticado (guardia o admin)
+    try {
+      final storage = FlutterSecureStorageService();
+      final token = await storage.obtenerTokenAcceso();
+      if (token != null && token.isNotEmpty) {
+        final repo = AuthRepository();
+        final usuarioSesion = await repo.consultarSesion(token);
+        if (mounted) {
+          final yaExiste = _usuarios.any((u) =>
+              u.usuario.toUpperCase() ==
+                  usuarioSesion.codigoInstitucional.toUpperCase() ||
+              u.correo.toLowerCase() ==
+                  usuarioSesion.correoInstitucional.toLowerCase());
+          if (!yaExiste) {
+            setState(() {
+              _usuarios.insert(
+                0,
+                UsuarioPersonalModel(
+                  id: usuarioSesion.id.toString(),
+                  nombres: usuarioSesion.nombres,
+                  apellidos: usuarioSesion.apellidos,
+                  usuario: usuarioSesion.codigoInstitucional,
+                  correo: usuarioSesion.correoInstitucional,
+                  rol: usuarioSesion.roles.contains('ADMINISTRADOR')
+                      ? 'ADMINISTRADOR'
+                      : 'GUARDIA',
+                  puertaAsignada: 'Puerta Principal - Campus Capanique',
+                  estado: 'ACTIVO',
+                ),
+              );
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -391,6 +473,20 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
                             }
                           });
 
+                          // Si es nuevo registro, intentar persistir en el backend
+                          if (usuarioAEditar == null) {
+                            _adminService.crearGuardia({
+                              'usuario': usuarioCtrl.text.trim().toUpperCase(),
+                              'nombres': nombresCtrl.text.trim(),
+                              'apellidos': apellidosCtrl.text.trim(),
+                              'contrasena': claveCtrl.text.isNotEmpty
+                                  ? claveCtrl.text
+                                  : 'Prueba-Local-UPT!2026',
+                              'punto_acceso_id': 1,
+                              'activo': true,
+                            }).catchError((_) => <String, dynamic>{});
+                          }
+
                           Navigator.of(ctx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -626,18 +722,27 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
 
                 // Lista de Guardias
                 Expanded(
-                  child: usuariosFiltrados.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No se encontraron guardias con ese filtro.',
-                            style: TextStyle(color: Color(0xFF94A3B8)),
-                          ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
-                          itemCount: usuariosFiltrados.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
+                  child: RefreshIndicator(
+                    onRefresh: _cargarGuardias,
+                    color: const Color(0xFF38BDF8),
+                    child: usuariosFiltrados.isEmpty
+                        ? ListView(
+                            children: const [
+                              SizedBox(height: 100),
+                              Center(
+                                child: Text(
+                                  'No se encontraron guardias con ese filtro.',
+                                  style: TextStyle(color: Color(0xFF94A3B8)),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
+                            itemCount: usuariosFiltrados.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
                             final u = usuariosFiltrados[index];
                             final activo = u.esActivo;
 
@@ -756,6 +861,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
                             );
                           },
                         ),
+                  ),
                 ),
               ],
             ),

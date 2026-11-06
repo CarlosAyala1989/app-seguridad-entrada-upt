@@ -78,3 +78,4 @@ class ReglaAccesoModel {
         'activo': activo,
       };
 }
+

@@ -309,4 +309,34 @@ class AdministracionService {
     }
     return [];
   }
+
+  Future<Map<String, dynamic>> crearGuardia(Map<String, dynamic> datos) async {
+    final token = await _obtenerTokenAdmin();
+    final url = ApiConfig.uriFor(ApiConfig.guardiasAdminPath);
+    final response = await _client.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(datos),
+    );
+
+    final Map<String, dynamic> body = response.body.isNotEmpty
+        ? jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>
+        : {};
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return body['datos'] as Map<String, dynamic>? ?? body;
+    }
+
+    final error = body['error'] as Map<String, dynamic>?;
+    throw ApiException(
+      codigo: error?['codigo'] as String? ?? 'ERROR_CREAR_GUARDIA',
+      mensaje: error?['mensaje'] as String? ?? 'No se pudo registrar el guardia.',
+      statusCode: response.statusCode,
+    );
+  }
 }
+

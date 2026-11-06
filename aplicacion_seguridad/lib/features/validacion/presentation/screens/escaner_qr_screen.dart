@@ -337,3 +337,4 @@ class _EscanerQrScreenState extends State<EscanerQrScreen> {
     );
   }
 }
+

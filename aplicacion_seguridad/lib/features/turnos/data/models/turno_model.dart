@@ -42,3 +42,4 @@ class TurnoModel {
         if (cerradoEn != null) 'cerrado_en': cerradoEn!.toIso8601String(),
       };
 }
+

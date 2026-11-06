@@ -56,3 +56,4 @@ class IncidenciaModel {
         'creado_en': creadoEn.toIso8601String(),
       };
 }
+
