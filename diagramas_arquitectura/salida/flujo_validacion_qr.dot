@@ -1,0 +1,348 @@
+digraph "IngresoUPT | Recorrido del QR hasta la BD" {
+	graph [bb="0,0,690,1838",
+		bgcolor="#FFFFFF",
+		compound=true,
+		dpi=150,
+		fontcolor="#142D44",
+		fontname="DejaVu Sans",
+		fontsize=24,
+		label=<<B>IngresoUPT | Recorrido del QR hasta la BD</B><BR/><BR/><FONT POINT-SIZE="12">La API implementa emisión y validación; el escáner de aplicacion_seguridad está pendiente<BR/>El QR offline requiere vínculo previo; la validación del guardia requiere conexión con la API</FONT>>,
+		labeljust=c,
+		labelloc=t,
+		lheight=1.00,
+		lp="345,1798",
+		lwidth=7.99,
+		newrank=true,
+		nodesep=0.4,
+		pad=0.45,
+		rankdir=TB,
+		ranksep=0.7,
+		splines=spline
+	];
+	node [color="#A8BAC9",
+		fixedsize=true,
+		fontcolor="#243B53",
+		fontname="DejaVu Sans",
+		fontsize=11,
+		height=1.4,
+		imagescale=true,
+		label="\N",
+		labelloc=b,
+		penwidth=1.1,
+		shape=box,
+		style=rounded,
+		width=1.4
+	];
+	edge [arrowsize=0.7,
+		color="#235A91",
+		fontcolor="#344D63",
+		fontname="DejaVu Sans",
+		fontsize=9,
+		penwidth=1.3
+	];
+	subgraph "cluster_01 · Flutter estudiante" {
+		graph [bb="168,1333,507,1750",
+			bgcolor="#EEF7FD",
+			color="#C5D4E0",
+			fillcolor="#EEF7FD",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="01 · Flutter estudiante",
+			labeljust=l,
+			lheight=0.21,
+			lp="254,1738.5",
+			lwidth=2.17,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		flujo_flutter	[height=2.3056,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/programming/framework/flutter.png",
+			label="Pantalla QR
+CodigoQrViewModel",
+			pos="378,1622",
+			shape=none,
+			width=1.4028];
+		qr_remoto	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="QR en línea
+Caso de uso → repositorio → fuente remota
+POST /api/codigos-qr + sesión + ubicación",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="322,1461",
+			style="rounded,filled",
+			width=3.6528];
+		flujo_flutter -> qr_remoto	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,331.23,1488.2 349.02,1538.7 343.57,1523.2 338.17,1507.9 333.64,1495.1"];
+		qr_offline	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="QR sin conexión del estudiante
+Vínculo previo: /codigos-qr/preparar-offline
+Secreto en Secure Storage + HMAC-SHA256",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="351,1382",
+			style="rounded,filled",
+			width=3.7222];
+		flujo_flutter -> qr_offline	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,441.77,1409.1 428.84,1572.3 463.04,1533.4 497.02,1478.3 468,1434 462.68,1425.9 455.75,1419 447.92,1413.3"];
+	}
+	subgraph "cluster_02 · Backend: emisión y vinculación" {
+		graph [bb="32,946,298,1325",
+			bgcolor="#F0F8F5",
+			color="#C5D4E0",
+			fillcolor="#F0F8F5",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="02 · Backend: emisión y vinculación",
+			labeljust=l,
+			lheight=0.21,
+			lp="165,1313.5",
+			lwidth=3.47,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		qr_emision	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="Autenticar sesión · validar datos
+Generar token / OTP / nonce
+Configurar vigencia y ubicación",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="172,1253",
+			style="rounded,filled",
+			width=2.8333];
+		qr_emision_bd	[height=2.6944,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/onprem/database/mysql.png",
+			label="Persistir credencial / vincular dispositivo
+credenciales_acceso · dispositivos
+Hash de tokens · secreto offline cifrado",
+			pos="166,1065",
+			shape=none,
+			width=1.4028];
+		qr_emision -> qr_emision_bd	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,169.1,1162.2 171.15,1225.7 170.66,1210.5 170.01,1190.3 169.33,1169.4"];
+	}
+	subgraph "cluster_03 · App seguridad: integración pendiente" {
+		graph [bb="34,684,345,805",
+			bgcolor="#FFF4E5",
+			color="#C5D4E0",
+			fillcolor="#FFF4E5",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="03 · App seguridad: integración pendiente",
+			labeljust=l,
+			lheight=0.21,
+			lp="189.5,793.5",
+			lwidth=4.10,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		qr_escaneo	[color="#A85A0C",
+			fillcolor="#FFF4E5",
+			fixedsize=false,
+			height=0.75,
+			label="Escanear QR + obtener GPS
+Enviar sesión del guardia y puerta
+POST /api/ingresos/validar",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="188,733",
+			style="rounded,filled,dashed",
+			width=2.9722];
+	}
+	subgraph "cluster_04 · Backend: validación ya implementada" {
+		graph [bb="8,8,368,654",
+			bgcolor="#F0F8F5",
+			color="#C5D4E0",
+			fillcolor="#F0F8F5",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="04 · Backend: validación ya implementada",
+			labeljust=l,
+			lheight=0.21,
+			lp="163.5,642.5",
+			lwidth=4.10,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		qr_validacion	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="Autenticación + rol SEGURIDAD + Zod
+Verificar puerta asignada y geocerca
+Interpretar QR en línea u offline",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="188,582",
+			style="rounded,filled",
+			width=3.2778];
+		qr_reglas	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="RepositorioIngresosMariaDb
+Usuario y sesión vigentes · bloqueos · reglas
+Vigencia · integridad · protección contra reutilización",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="188,477",
+			style="rounded,filled",
+			width=4.3889];
+		qr_validacion -> qr_reglas	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,188,504.21 188,554.74 188,541.55 188,525.41 188,511.35"];
+		qr_transaccion	[height=3.0972,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/onprem/database/mysql.png",
+			label="Transacción SQL + bloqueo de filas
+Consumir credencial o registrar uso offline
+Insertar registros_acceso y auditoría
+Crear avisos \
+cuando corresponde · COMMIT",
+			pos="210,287.5",
+			shape=none,
+			width=1.4028];
+		qr_reglas -> qr_transaccion	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,197,399.25 191.06,449.93 192.47,437.87 194.27,422.6 196.18,406.3"];
+		qr_respuesta	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="Resultado JSON
+AUTORIZADO / DENEGADO + motivo
+Identidad mínima sólo cuando se autoriza",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="210,57",
+			style="rounded,filled",
+			width=3.5417];
+		qr_transaccion -> qr_respuesta	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,210,84.336 210,175.93 210,145.09 210,113.9 210,91.343"];
+	}
+	subgraph "cluster_05 · Flutter estudiante: consulta posterior" {
+		graph [bb="376,8,682,129",
+			bgcolor="#EEF7FD",
+			color="#C5D4E0",
+			fillcolor="#EEF7FD",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="05 · Flutter estudiante: consulta posterior",
+			labeljust=l,
+			lheight=0.21,
+			lp="529,117.5",
+			lwidth=4.03,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		qr_consulta	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="Historial y bandeja personal
+GET /api/ingresos/historial
+GET /api/notificaciones · consultas HTTP",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="521,57",
+			style="rounded,filled",
+			width=3.4167];
+	}
+	qr_remoto -> qr_emision	[dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		pos="e,171.31,1280.1 238.69,1433.9 227.11,1427.3 216.34,1419.1 208,1409 179.58,1374.5 172.7,1321.7 171.49,1287.5"];
+	qr_mostrar	[fillcolor="#FFFFFF",
+		fixedsize=false,
+		height=0.65278,
+		label="QR mostrado en pantalla
+Credencial temporal en línea u offline",
+		labelloc=c,
+		margin="0.16,0.13",
+		pos="188,875.5",
+		style="rounded,filled",
+		width=3.2083];
+	qr_offline -> qr_mostrar	[color="#18786B",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="generación local tras vincular",
+		lp="482.5,1194",
+		pos="e,303.84,896.37 359.61,1354.9 382.82,1279.3 438.38,1057.1 338,924 330.51,914.06 320.93,906.16 310.25,899.88"];
+	qr_emision_bd -> qr_mostrar	[dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="respuesta JSON → qr_flutter",
+		lp="249,931",
+		pos="e,173.16,899.27 157.28,967.99 157.84,953.12 159.53,938.04 163,924 164.54,917.75 167.07,911.42 169.94,905.51"];
+	qr_mostrar -> qr_escaneo	[color="#A85A0C",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="lectura óptica pendiente",
+		lp="263,820",
+		pos="e,188,760.35 188,851.93 188,829.1 188,793.54 188,767.44",
+		style=dashed];
+	qr_escaneo -> qr_validacion	[color="#A85A0C",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="cliente pendiente · endpoint disponible",
+		lp="308.5,669",
+		pos="e,188,609.03 188,705.7 188,680.81 188,643.33 188,616.35",
+		style=dashed];
+	qr_transaccion -> qr_consulta	[color="#18786B",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="datos disponibles para consulta",
+		lp="508,144",
+		pos="e,485.38,84.167 260.66,249.28 321.73,204.41 423.18,129.87 479.72,88.328"];
+}

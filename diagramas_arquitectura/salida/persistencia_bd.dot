@@ -1,0 +1,262 @@
+digraph "IngresoUPT | Persistencia de datos" {
+	graph [bb="0,0,1272,735",
+		bgcolor="#FFFFFF",
+		compound=true,
+		dpi=150,
+		fontcolor="#142D44",
+		fontname="DejaVu Sans",
+		fontsize=24,
+		label=<<B>IngresoUPT | Persistencia de datos</B><BR/><BR/><FONT POINT-SIZE="12">Agrupación lógica de las 20 tablas declaradas en migraciones/001…014<BR/>Todos los grupos pertenecen a una única base de datos</FONT>>,
+		labeljust=c,
+		labelloc=t,
+		lheight=1.00,
+		lp="636,695",
+		lwidth=6.60,
+		newrank=true,
+		nodesep=0.4,
+		pad=0.45,
+		rankdir=LR,
+		ranksep=0.7,
+		splines=spline
+	];
+	node [color="#A8BAC9",
+		fixedsize=true,
+		fontcolor="#243B53",
+		fontname="DejaVu Sans",
+		fontsize=11,
+		height=1.4,
+		imagescale=true,
+		label="\N",
+		labelloc=b,
+		penwidth=1.1,
+		shape=box,
+		style=rounded,
+		width=1.4
+	];
+	edge [arrowsize=0.7,
+		color="#235A91",
+		fontcolor="#344D63",
+		fontname="DejaVu Sans",
+		fontsize=9,
+		penwidth=1.3
+	];
+	subgraph "cluster_MySQL 8 / MariaDB · TCP 3306" {
+		graph [bb="864,8,1264,647",
+			bgcolor="#FFF8EB",
+			color="#C5D4E0",
+			fillcolor="#FFF8EB",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="MySQL 8 / MariaDB · TCP 3306",
+			labeljust=l,
+			lheight=0.21,
+			lp="979,635.5",
+			lwidth=2.97,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		persistencia_bd	[height=2.3056,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/onprem/database/mysql.png",
+			label="Base de datos IngresoUPT
+Claves foráneas · índices · unicidad",
+			pos="936.5,304",
+			shape=none,
+			width=1.4028];
+		tablas_0	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=1.2639,
+			label="Identidad y autorización
+
+usuarios
+roles
+usuarios_roles
+perfiles_academicos",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="1140,76",
+			style="rounded,filled",
+			width=2.4028];
+		persistencia_bd -> tablas_0	[color="#667085",
+			dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,1054.5,121.67 976.44,220.9 992.71,191.81 1013.6,160.36 1038,136 1041.4,132.61 1045,129.34 1048.8,126.2",
+			style=dotted];
+		tablas_1	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=1.0972,
+			label="Sesiones y dispositivos
+
+sesiones
+dispositivos
+intentos_inicio_sesion",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="1140,190",
+			style="rounded,filled",
+			width=2.4028];
+		persistencia_bd -> tablas_1	[color="#667085",
+			dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,1064,229.56 987.07,273.78 1003.2,264.1 1021.3,253.45 1038,244 1044.4,240.37 1051.1,236.65 1057.9,232.95",
+			style=dotted];
+		tablas_2	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=1.2639,
+			label="Credenciales y acceso
+
+puntos_acceso
+credenciales_acceso
+usos_codigos_offline
+registros_acceso",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="1140,304",
+			style="rounded,filled",
+			width=2.4028];
+		persistencia_bd -> tablas_2	[color="#667085",
+			dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,1053.5,304 987.05,304 1005,304 1025.9,304 1046.3,304",
+			style=dotted];
+		tablas_3	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=1.4306,
+			label="Operación de seguridad
+
+asignaciones_seguridad
+turnos_seguridad
+incidencias_seguridad
+bloqueos_identidad
+reglas_acceso",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="1140,430",
+			style="rounded,filled",
+			width=2.4028];
+		persistencia_bd -> tablas_3	[color="#667085",
+			dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,1056.3,378.26 987.05,334.98 1006.1,346.91 1028.5,360.91 1050.2,374.45",
+			style=dotted];
+		tablas_4	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=1.2639,
+			label="Avisos, auditoría y configuración
+
+notificaciones_usuario
+registros_auditoria
+configuraciones_sistema
+migraciones_aplicadas",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="1140,556",
+			style="rounded,filled",
+			width=2.8333];
+		persistencia_bd -> tablas_4	[color="#667085",
+			dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,1053.6,510.25 968.95,387.43 985.55,423.75 1008.6,465 1038,496 1041.2,499.38 1044.6,502.64 1048.2,505.76",
+			style=dotted];
+	}
+	subgraph "cluster_Aplicación y acceso SQL" {
+		graph [bb="8,206,732,411",
+			bgcolor="#F0F8F5",
+			color="#C5D4E0",
+			fillcolor="#F0F8F5",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=14,
+			label="Aplicación y acceso SQL",
+			labeljust=l,
+			lheight=0.21,
+			lp="100,399.5",
+			lwidth=2.33,
+			margin=22,
+			pencolor="#AEB6BE",
+			penwidth=1.1,
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		persistencia_api	[height=1.9028,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/programming/language/nodejs.png",
+			label="API Node.js / Express",
+			pos="80.5,297",
+			shape=none,
+			width=1.4028];
+		persistencia_repos	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="Repositorios y seguridad_operativa
+Consultas parametrizadas
+Transacciones + SELECT … FOR UPDATE",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="305.5,338",
+			style="rounded,filled",
+			width=3.4306];
+		persistencia_api -> persistencia_repos	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,181.99,315.48 131.27,306.15 144.51,308.59 159.46,311.33 174.88,314.17"];
+		persistencia_pool	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="mariadb.createPool()
+Conexiones del backend
+config/database.js",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="623.5,304",
+			style="rounded,filled",
+			width=2.4028];
+		persistencia_repos -> persistencia_pool	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			pos="e,536.62,313.24 429.13,324.81 462.51,321.21 498.12,317.38 529.56,314"];
+		persistencia_migraciones	[fillcolor="#FFFFFF",
+			fixedsize=false,
+			height=0.75,
+			label="server.js antes de escuchar HTTP
+Ejecutar migraciones pendientes
+Asegurar administrador · verificar BD",
+			labelloc=c,
+			margin="0.16,0.13",
+			pos="305.5,255",
+			style="rounded,filled",
+			width=3.1944];
+		persistencia_migraciones -> persistencia_pool	[color="#18786B",
+			dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			label=arranque,
+			lp="483,293",
+			pos="e,536.86,290.72 420.58,272.69 456.4,278.24 495.48,284.3 529.64,289.6"];
+	}
+	persistencia_pool -> persistencia_bd	[color="#18786B",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="red interna Docker",
+		lp="798,311",
+		pos="e,885.84,304 710.31,304 764,304 831.68,304 878.76,304"];
+}
