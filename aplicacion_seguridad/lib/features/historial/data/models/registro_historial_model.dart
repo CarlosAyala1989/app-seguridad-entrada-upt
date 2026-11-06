@@ -4,11 +4,13 @@ class RegistroHistorialModel {
   final String motivo;
   final String? nombreCompleto;
   final String? codigoInstitucional;
+  final String? codigoEnmascarado;
   final String? escuela;
   final String puntoAccesoNombre;
   final String puntoAccesoCodigo;
   final DateTime fechaHora;
   final String? observacion;
+  final int? turnoId;
 
   const RegistroHistorialModel({
     required this.id,
@@ -16,14 +18,18 @@ class RegistroHistorialModel {
     required this.motivo,
     this.nombreCompleto,
     this.codigoInstitucional,
+    this.codigoEnmascarado,
     this.escuela,
     required this.puntoAccesoNombre,
     required this.puntoAccesoCodigo,
     required this.fechaHora,
     this.observacion,
+    this.turnoId,
   });
 
   bool get esAutorizado => resultado == 'AUTORIZADO';
+
+  int? get idNumerico => int.tryParse(id.replaceAll(RegExp(r'[^0-9]'), ''));
 
   String get motivoLegible {
     switch (motivo) {
@@ -32,35 +38,57 @@ class RegistroHistorialModel {
       case 'CREDENCIAL_YA_UTILIZADA':
         return 'Credencial QR ya utilizada';
       case 'CREDENCIAL_EXPIRADA':
+      case 'QR_EXPIRADO':
         return 'Tiempo de vigencia QR expirado';
       case 'HORARIO_NO_PERMITIDO':
+      case 'FUERA_HORARIO_PERMITIDO':
         return 'Fuera de franja horaria permitida';
       case 'UBICACION_INVALIDA':
       case 'FUERA_DE_ZONA':
+      case 'GEOCERCA_INVALIDA':
         return 'Generado fuera del perímetro del campus';
       case 'USUARIO_BLOQUEADO':
         return 'Usuario con restricción temporal';
+      case 'REGLA_ACCESO_DENEGADA':
+        return 'Acceso restringido por regla institucional';
+      case 'DATOS_IDENTIDAD_INCOMPLETOS':
+        return 'Datos de identidad incompletos';
       default:
         return motivo.replaceAll('_', ' ');
     }
   }
 
   factory RegistroHistorialModel.fromJson(Map<String, dynamic> json) {
+    final punto = json['punto_acceso'] as Map<String, dynamic>?;
+    final usuario = json['usuario'] as Map<String, dynamic>?;
+
+    final puntoNombre = punto?['nombre'] as String? ??
+        json['punto_acceso_nombre'] as String? ??
+        'Puerta Principal - Campus Capanique';
+    final puntoCodigo = punto?['codigo'] as String? ??
+        json['punto_acceso_codigo'] as String? ??
+        'PUERTA-PRINCIPAL';
+
+    final codEnmascarado = usuario?['codigo_enmascarado'] as String? ??
+        json['codigo_enmascarado'] as String?;
+    final codInst = codEnmascarado ?? json['codigo_institucional'] as String?;
+
     return RegistroHistorialModel(
-      id: json['id'] as String? ?? '',
+      id: json['id'] != null ? json['id'].toString() : '',
       resultado: json['resultado'] as String? ?? 'DENEGADO',
       motivo: json['motivo'] as String? ?? 'SIN_MOTIVO',
-      nombreCompleto: json['nombre_completo'] as String?,
-      codigoInstitucional: json['codigo_institucional'] as String?,
+      nombreCompleto: json['nombre_completo'] as String? ??
+          (codEnmascarado != null ? 'Titular $codEnmascarado' : null),
+      codigoInstitucional: codInst,
+      codigoEnmascarado: codEnmascarado,
       escuela: json['escuela'] as String?,
-      puntoAccesoNombre: json['punto_acceso_nombre'] as String? ??
-          'Puerta Principal - Campus Capanique',
-      puntoAccesoCodigo: json['punto_acceso_codigo'] as String? ??
-          'PUERTA-PRINCIPAL',
+      puntoAccesoNombre: puntoNombre,
+      puntoAccesoCodigo: puntoCodigo,
       fechaHora: json['registrado_en'] != null
           ? DateTime.tryParse(json['registrado_en'] as String) ?? DateTime.now()
           : DateTime.now(),
       observacion: json['observacion'] as String?,
+      turnoId: json['turno_id'] as int?,
     );
   }
 
@@ -69,13 +97,16 @@ class RegistroHistorialModel {
       'id': id,
       'resultado': resultado,
       'motivo': motivo,
-      'nombre_completo': nombreCompleto,
-      'codigo_institucional': codigoInstitucional,
-      'escuela': escuela,
+      if (nombreCompleto != null) 'nombre_completo': nombreCompleto,
+      if (codigoInstitucional != null)
+        'codigo_institucional': codigoInstitucional,
+      if (codigoEnmascarado != null) 'codigo_enmascarado': codigoEnmascarado,
+      if (escuela != null) 'escuela': escuela,
       'punto_acceso_nombre': puntoAccesoNombre,
       'punto_acceso_codigo': puntoAccesoCodigo,
       'registrado_en': fechaHora.toIso8601String(),
-      'observacion': observacion,
+      if (observacion != null) 'observacion': observacion,
+      if (turnoId != null) 'turno_id': turnoId,
     };
   }
 
