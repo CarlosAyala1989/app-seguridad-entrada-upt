@@ -193,6 +193,19 @@ final class LoginViewModel {
     }
   }
 
+  /// Expone la espera del resultado de Google solo para las pruebas, sin
+  /// abrir el navegador.
+  @visibleForTesting
+  Future<void> esperarResultadoGoogle({
+    required String transaccionId,
+    required DateTime expiraEn,
+  }) {
+    return _iniciarPollingSecuencial(
+      transaccionId: transaccionId,
+      expiraEn: expiraEn,
+    );
+  }
+
   /// 5. Polling secuencial: espera al menos 2s entre respuestas sin solapamientos.
   Future<void> _iniciarPollingSecuencial({
     required String transaccionId,
@@ -259,12 +272,18 @@ final class LoginViewModel {
             );
             return;
         }
+      } on NetworkFailure {
+        // Corte momentáneo de red (por ejemplo, la app quedó en segundo plano
+        // mientras el usuario elegía su cuenta en Google): no se aborta el
+        // inicio de sesión; se vuelve a consultar en la siguiente vuelta.
+        // El límite de tiempo (expiraEn) evita reintentar indefinidamente.
+        continue;
       } on Failure catch (e) {
         _pollingActivo = false;
         _emitir(LoginErrorState(mensaje: e.message));
         return;
       } catch (_) {
-        // En micro-fallas de red continúa en la siguiente iteración sin abortar
+        // Error inesperado: también se reintenta en la siguiente vuelta.
       }
     }
   }

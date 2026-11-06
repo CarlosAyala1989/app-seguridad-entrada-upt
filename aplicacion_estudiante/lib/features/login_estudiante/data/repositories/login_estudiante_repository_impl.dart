@@ -103,6 +103,10 @@ final class LoginEstudianteRepositoryImpl implements LoginEstudianteRepository {
       return resultado;
     } on LoginFailure {
       rethrow;
+    } on NetworkFailure {
+      // Se deja pasar tal cual: el ViewModel reintenta la consulta ante un
+      // corte de red momentáneo en vez de abortar el inicio de sesión.
+      rethrow;
     } on Failure catch (e) {
       throw GoogleAuthFailure(e.message);
     } catch (_) {

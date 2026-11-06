@@ -1,0 +1,186 @@
+digraph "IngresoUPT | Tecnologías del sistema" {
+	graph [bb="0,0,806,676",
+		bgcolor=white,
+		dpi=150,
+		fontcolor="#142D44",
+		fontname="DejaVu Sans",
+		fontsize=25,
+		label="IngresoUPT | Tecnologías del sistema",
+		labelloc=t,
+		lheight=0.39,
+		lp="403,658",
+		lwidth=6.39,
+		newrank=true,
+		nodesep=0.7,
+		pad=0.5,
+		rankdir=LR,
+		ranksep=1.0,
+		splines=spline
+	];
+	node [fixedsize=true,
+		fontcolor="#243B53",
+		fontname="DejaVu Sans",
+		fontsize=14,
+		height=1.4,
+		imagescale=true,
+		label="\N",
+		labelloc=b,
+		shape=box,
+		style=rounded,
+		width=1.4
+	];
+	edge [arrowsize=0.8,
+		color="#235A91",
+		fontcolor="#344D63",
+		fontname="DejaVu Sans",
+		fontsize=12,
+		penwidth=1.6
+	];
+	subgraph "cluster_Aplicaciones móviles" {
+		graph [bb="0,167,192,632",
+			bgcolor="#EEF7FD",
+			color="#CBD5E1",
+			fillcolor="#EEF7FD",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=17,
+			label="Aplicaciones móviles",
+			labeljust=l,
+			lheight=0.26,
+			lp="96,618.5",
+			lwidth=2.44,
+			margin=28,
+			pencolor="#AEB6BE",
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		estudiante	[height=2.3056,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/programming/framework/flutter.png",
+			label="Flutter / Dart
+App estudiante",
+			pos="95.5,494",
+			shape=none,
+			width=1.4028];
+		seguridad	[height=2.3056,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/programming/framework/flutter.png",
+			label="Flutter / Dart
+App seguridad",
+			pos="95.5,278",
+			shape=none,
+			width=1.4028];
+	}
+	subgraph "cluster_Servidor · Docker / Dokploy" {
+		graph [bb="292,293,751.5,542",
+			bgcolor="#F0F8F5",
+			color="#CBD5E1",
+			fillcolor="#F0F8F5",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=17,
+			label="Servidor · Docker / Dokploy",
+			labeljust=l,
+			lheight=0.26,
+			lp="414.5,528.5",
+			lwidth=3.18,
+			margin=28,
+			pencolor="#AEB6BE",
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		api	[height=2.3056,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/programming/language/nodejs.png",
+			label="Node.js + Express
+API REST",
+			pos="370.5,404",
+			shape=none,
+			width=1.4028];
+		bd	[height=2.3056,
+			image="/VMQEMU/app-seguridad-entrada-upt/diagramas_arquitectura/.venv/lib/python3.12/site-packages/resources/onprem/database/mysql.png",
+			label="MySQL / MariaDB
+Base de datos",
+			pos="673,404",
+			shape=none,
+			width=1.4028];
+		api -> bd	[dir=forward,
+			fontcolor="#2D3436",
+			fontname="Sans-Serif",
+			fontsize=13,
+			label=SQL,
+			lp="498.5,411",
+			pos="e,622.3,404 421.12,404 474.19,404 558.25,404 614.25,404"];
+	}
+	subgraph cluster_Integraciones {
+		graph [bb="548,8,798,285",
+			bgcolor="#F7F3FB",
+			color="#CBD5E1",
+			fillcolor="#F7F3FB",
+			fontcolor="#24445F",
+			fontname="DejaVu Sans",
+			fontsize=17,
+			label=Integraciones,
+			labeljust=l,
+			lheight=0.26,
+			lp="613.5,271.5",
+			lwidth=1.60,
+			margin=28,
+			pencolor="#AEB6BE",
+			rankdir=LR,
+			shape=box,
+			style="rounded,filled"
+		];
+		google	[color="#B8C4D4",
+			fillcolor=white,
+			fixedsize=false,
+			height=1,
+			label="Google OAuth 2.0
+Identidad institucional",
+			labelloc=c,
+			margin=0.2,
+			pos="673,194",
+			style="rounded,filled",
+			width=2.6944];
+		intranet	[color="#B8C4D4",
+			fillcolor=white,
+			fixedsize=false,
+			height=1,
+			label="Playwright + Chromium
+Intranet UPT",
+			labelloc=c,
+			margin=0.2,
+			pos="673,72",
+			style="rounded,filled",
+			width=2.6944];
+	}
+	estudiante -> api	[dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="HTTPS / JSON",
+		lp="242,466",
+		pos="e,319.63,420.44 146.25,477.6 192.97,462.2 262.83,439.17 311.93,422.98"];
+	seguridad -> api	[dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label="HTTPS / JSON",
+		lp="242,370",
+		pos="e,319.63,380.98 146.25,300.96 193.07,322.57 263.12,354.9 312.23,377.57"];
+	api -> google	[color="#18786B",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label=Autenticación,
+		lp="498.5,348",
+		pos="e,620.29,230.14 421.12,369.32 473.98,332.38 557.6,273.95 613.6,234.81"];
+	api -> intranet	[color="#18786B",
+		dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		label=Verificación,
+		lp="498.5,239",
+		pos="e,584.55,108.15 409.31,321 439.69,262.02 487.29,184.46 548,133 557.01,125.36 567.14,118.41 577.62,112.16"];
+}
