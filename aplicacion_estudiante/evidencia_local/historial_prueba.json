@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "punto_acceso": "Puerta principal UPT",
+    "resultado": "AUTORIZADO",
+    "registrado_en": "2026-10-30T08:15:00-05:00"
+  },
+  {
+    "id": 2,
+    "punto_acceso": "Puerta de Ingeniería",
+    "resultado": "AUTORIZADO",
+    "registrado_en": "2026-10-30T10:30:00-05:00"
+  },
+  {
+    "id": 3,
+    "punto_acceso": "Puerta principal UPT",
+    "resultado": "DENEGADO",
+    "registrado_en": "2026-10-30T12:00:00-05:00"
+  }
+]

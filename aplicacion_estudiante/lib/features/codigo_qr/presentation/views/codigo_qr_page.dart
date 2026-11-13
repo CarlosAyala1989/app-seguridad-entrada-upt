@@ -109,7 +109,7 @@ class _CodigoQrPageState extends State<CodigoQrPage> {
                 estado: visible,
                 alRevocar: _revocar,
               ),
-              CodigoQrOfflineVisible visible => _CodigoOfflineVisible(
+              CodigoQrOfflineVisible visible => CodigoOfflineVisible(
                 estado: visible,
               ),
               CodigoQrError(:final message) => _Mensaje(
@@ -383,8 +383,8 @@ class _CodigoVisible extends StatelessWidget {
 
 /// QR calculado en el teléfono. No hay botón "Anular": esa acción es para
 /// el QR en línea y necesita internet.
-class _CodigoOfflineVisible extends StatelessWidget {
-  const _CodigoOfflineVisible({required this.estado});
+class CodigoOfflineVisible extends StatelessWidget {
+  const CodigoOfflineVisible({super.key, required this.estado});
 
   final CodigoQrOfflineVisible estado;
 

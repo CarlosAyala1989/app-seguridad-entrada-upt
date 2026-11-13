@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'core/di/app_dependencies.dart';
 import 'shared/l10n/app_strings.dart';
 import 'shared/theme/app_theme.dart';
+import 'simulacion_linux.dart';
 
 void main() {
-  runApp(const IngresoUptApp());
+  runApp(
+    IngresoUptApp(
+      home:
+          kDebugMode && !kIsWeb && defaultTargetPlatform == TargetPlatform.linux
+          ? const SimulacionLinux()
+          : null,
+    ),
+  );
 }
 
 class IngresoUptApp extends StatelessWidget {
