@@ -33,6 +33,76 @@ class ReglaAccesoModel {
 
   bool get esPermitir => accion.toUpperCase() == 'PERMITIR';
 
+  ReglaAccesoModel copyWith({
+    int? id,
+    String? nombre,
+    String? rol,
+    String? estadoUsuario,
+    String? accion,
+    int? puntoAccesoId,
+    List<int>? diasSemana,
+    String? horaInicio,
+    String? horaFin,
+    DateTime? vigenteDesde,
+    DateTime? vigenteHasta,
+    bool? activo,
+  }) {
+    return ReglaAccesoModel(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      rol: rol ?? this.rol,
+      estadoUsuario: estadoUsuario ?? this.estadoUsuario,
+      accion: accion ?? this.accion,
+      puntoAccesoId: puntoAccesoId ?? this.puntoAccesoId,
+      diasSemana: diasSemana ?? this.diasSemana,
+      horaInicio: horaInicio ?? this.horaInicio,
+      horaFin: horaFin ?? this.horaFin,
+      vigenteDesde: vigenteDesde ?? this.vigenteDesde,
+      vigenteHasta: vigenteHasta ?? this.vigenteHasta,
+      activo: activo ?? this.activo,
+      creadoPor: creadoPor,
+      actualizadoPor: actualizadoPor,
+    );
+  }
+
+  static List<ReglaAccesoModel> obtenerReglasPredeterminadas() {
+    return const [
+      ReglaAccesoModel(
+        id: 1,
+        nombre: 'Ingreso Estudiantil General',
+        rol: 'ESTUDIANTE',
+        estadoUsuario: 'ACTIVO',
+        accion: 'PERMITIR',
+        diasSemana: [1, 2, 3, 4, 5],
+        horaInicio: '06:30',
+        horaFin: '22:30',
+        activo: true,
+      ),
+      ReglaAccesoModel(
+        id: 2,
+        nombre: 'Acceso Docentes y Personal',
+        rol: 'DOCENTE',
+        estadoUsuario: 'ACTIVO',
+        accion: 'PERMITIR',
+        diasSemana: [1, 2, 3, 4, 5, 6],
+        horaInicio: '06:00',
+        horaFin: '23:00',
+        activo: true,
+      ),
+      ReglaAccesoModel(
+        id: 3,
+        nombre: 'Restricción Nocturna Campus',
+        rol: 'ESTUDIANTE',
+        estadoUsuario: 'ACTIVO',
+        accion: 'DENEGAR',
+        diasSemana: [1, 2, 3, 4, 5, 6, 7],
+        horaInicio: '23:00',
+        horaFin: '05:30',
+        activo: true,
+      ),
+    ];
+  }
+
   factory ReglaAccesoModel.fromJson(Map<String, dynamic> json) {
     final datos = json['datos'] as Map<String, dynamic>? ?? json;
 

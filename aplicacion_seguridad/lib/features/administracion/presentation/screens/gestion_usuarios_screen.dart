@@ -107,7 +107,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
   bool _buscandoAdminUsuarios = false;
 
   // Estado para Reglas de Acceso (Issue #22)
-  List<ReglaAccesoModel> _reglasAcceso = [];
+  List<ReglaAccesoModel> _reglasAcceso = ReglaAccesoModel.obtenerReglasPredeterminadas();
   bool _cargandoReglas = false;
 
   @override
@@ -214,12 +214,241 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
     setState(() => _cargandoReglas = true);
     try {
       final reglas = await _adminService.consultarReglasAcceso();
-      if (mounted) setState(() => _reglasAcceso = reglas);
+      if (mounted && reglas.isNotEmpty) setState(() => _reglasAcceso = reglas);
     } catch (_) {
       // Entorno offline / mock
     } finally {
       if (mounted) setState(() => _cargandoReglas = false);
     }
+  }
+
+  void _toggleRegla(ReglaAccesoModel r) {
+    final nuevoActivo = !r.activo;
+    final index = _reglasAcceso.indexWhere((x) => x.id == r.id);
+    if (index != -1) {
+      setState(() {
+        _reglasAcceso[index] = r.copyWith(activo: nuevoActivo);
+      });
+      _adminService.actualizarReglaAcceso(
+        r.id,
+        _reglasAcceso[index].toJson(),
+      ).catchError((_) => r);
+    }
+  }
+
+  void _abrirModalNuevaRegla() {
+    final formKey = GlobalKey<FormState>();
+    final nombreCtrl = TextEditingController();
+    String rolSeleccionado = 'ESTUDIANTE';
+    String accionSeleccionada = 'PERMITIR';
+    final horaInicioCtrl = TextEditingController(text: '07:00');
+    final horaFinCtrl = TextEditingController(text: '22:00');
+    List<int> diasSeleccionados = [1, 2, 3, 4, 5];
+
+    final roles = ['ESTUDIANTE', 'DOCENTE', 'TRABAJADOR'];
+    final acciones = ['PERMITIR', 'DENEGAR'];
+    final nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Configurar Regla de Acceso (US-18)',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: nombreCtrl,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'Nombre de la regla',
+                          labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                          hintText: 'Ej. Acceso Tarde Laboratorios',
+                          hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa un nombre' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: rolSeleccionado,
+                              dropdownColor: const Color(0xFF1E293B),
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              decoration: InputDecoration(
+                                labelText: 'Rol',
+                                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                                filled: true,
+                                fillColor: const Color(0xFF0F172A),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              items: roles.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                              onChanged: (v) => setModalState(() => rolSeleccionado = v ?? 'ESTUDIANTE'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: accionSeleccionada,
+                              dropdownColor: const Color(0xFF1E293B),
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              decoration: InputDecoration(
+                                labelText: 'Acción',
+                                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                                filled: true,
+                                fillColor: const Color(0xFF0F172A),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              items: acciones.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+                              onChanged: (v) => setModalState(() => accionSeleccionada = v ?? 'PERMITIR'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: horaInicioCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Hora inicio (HH:mm)',
+                                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                                filled: true,
+                                fillColor: const Color(0xFF0F172A),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: horaFinCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Hora fin (HH:mm)',
+                                labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                                filled: true,
+                                fillColor: const Color(0xFF0F172A),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Días de la semana permitidos:',
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        children: List.generate(7, (i) {
+                          final diaNum = i + 1;
+                          final seleccionado = diasSeleccionados.contains(diaNum);
+                          return FilterChip(
+                            label: Text(nombresDias[i]),
+                            selected: seleccionado,
+                            selectedColor: const Color(0xFF0284C7),
+                            checkmarkColor: Colors.white,
+                            labelStyle: TextStyle(
+                              color: seleccionado ? Colors.white : const Color(0xFF94A3B8),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                            backgroundColor: const Color(0xFF0F172A),
+                            onSelected: (val) {
+                              setModalState(() {
+                                if (val) {
+                                  diasSeleccionados.add(diaNum);
+                                } else if (diasSeleccionados.length > 1) {
+                                  diasSeleccionados.remove(diaNum);
+                                }
+                              });
+                            },
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0284C7),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          if (!formKey.currentState!.validate()) return;
+                          final nuevaRegla = ReglaAccesoModel(
+                            id: DateTime.now().millisecondsSinceEpoch % 100000,
+                            nombre: nombreCtrl.text.trim(),
+                            rol: rolSeleccionado,
+                            estadoUsuario: 'ACTIVO',
+                            accion: accionSeleccionada,
+                            diasSemana: diasSeleccionados..sort(),
+                            horaInicio: horaInicioCtrl.text.trim(),
+                            horaFin: horaFinCtrl.text.trim(),
+                            activo: true,
+                          );
+
+                          setState(() {
+                            _reglasAcceso.insert(0, nuevaRegla);
+                          });
+
+                          _adminService.crearReglaAcceso(nuevaRegla.toJson()).catchError((_) => nuevaRegla);
+
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: const Color(0xFF10B981),
+                              content: Text('Regla "${nuevaRegla.nombre}" creada exitosamente.'),
+                            ),
+                          );
+                        },
+                        child: const Text('Crear Regla de Acceso', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _abrirModalRegistro([UsuarioPersonalModel? usuarioAEditar]) {
@@ -680,7 +909,17 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
               ),
               onPressed: () => _abrirModalRegistro(),
             )
-          : null,
+          : _tabController.index == 2
+              ? FloatingActionButton.extended(
+                  backgroundColor: const Color(0xFF0284C7),
+                  icon: const Icon(Icons.rule_folder_outlined, color: Colors.white),
+                  label: const Text(
+                    'Nueva Regla',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () => _abrirModalNuevaRegla(),
+                )
+              : null,
       body: TabBarView(
         controller: _tabController,
         children: [
@@ -951,63 +1190,162 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen>
             ),
           ),
 
-          // PESTAÑA 3: Reglas Configurables de Acceso (Issue #22)
+          // PESTAÑA 3: Reglas Configurables de Acceso (Issue #22 / US-18)
           SafeArea(
             child: _cargandoReglas
                 ? const Center(child: CircularProgressIndicator())
-                : _reglasAcceso.isEmpty
-                    ? Center(
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                    itemCount: _reglasAcceso.length,
+                    itemBuilder: (context, i) {
+                      final r = _reglasAcceso[i];
+                      final permite = r.esPermitir;
+                      final nombresDiasCortos = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: r.activo
+                                ? (permite ? const Color(0xFF059669) : const Color(0xFFDC2626))
+                                : const Color(0xFF334155),
+                            width: 1.5,
+                          ),
+                        ),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.rule_outlined, size: 48, color: Color(0xFF64748B)),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Sin reglas adicionales cargadas.',
-                              style: TextStyle(color: Color(0xFF94A3B8)),
+                            Row(
+                              children: [
+                                Icon(
+                                  permite ? Icons.check_circle_rounded : Icons.do_not_disturb_on_rounded,
+                                  color: permite ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    r.nombre,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                Switch(
+                                  value: r.activo,
+                                  activeThumbColor: const Color(0xFF38BDF8),
+                                  onChanged: (_) => _toggleRegla(r),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              onPressed: _cargarReglasAcceso,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Cargar Reglas del Servidor'),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: (permite ? const Color(0xFF059669) : const Color(0xFFDC2626)).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    r.accion,
+                                    style: TextStyle(
+                                      color: permite ? const Color(0xFF34D399) : const Color(0xFFF87171),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0369A1).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'Rol: ${r.rol}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF38BDF8),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF334155),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.access_time_rounded, size: 12, color: Color(0xFFCBD5E1)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${r.horaInicio} - ${r.horaFin}',
+                                        style: const TextStyle(
+                                          color: Color(0xFFCBD5E1),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Días: ',
+                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                ),
+                                const SizedBox(width: 4),
+                                ...List.generate(7, (dIdx) {
+                                  final numDia = dIdx + 1;
+                                  final incluido = r.diasSemana.contains(numDia);
+                                  return Container(
+                                    margin: const EdgeInsets.only(right: 4),
+                                    width: 18,
+                                    height: 18,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: incluido
+                                          ? const Color(0xFF0284C7)
+                                          : const Color(0xFF0F172A),
+                                      border: Border.all(
+                                        color: incluido
+                                            ? const Color(0xFF38BDF8)
+                                            : const Color(0xFF334155),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      nombresDiasCortos[numDia],
+                                      style: TextStyle(
+                                        color: incluido ? Colors.white : const Color(0xFF64748B),
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ],
                             ),
                           ],
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _reglasAcceso.length,
-                        itemBuilder: (context, i) {
-                          final r = _reglasAcceso[i];
-                          return Card(
-                            color: const Color(0xFF1E293B),
-                            margin: const EdgeInsets.only(bottom: 10),
-                            child: ListTile(
-                              leading: Icon(
-                                r.esPermitir ? Icons.check_circle : Icons.block,
-                                color: r.esPermitir ? Colors.green : Colors.red,
-                              ),
-                              title: Text(
-                                r.nombre,
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                '${r.rol} · ${r.accion} · Horario: ${r.horaInicio} - ${r.horaFin}',
-                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                              ),
-                              trailing: Text(
-                                r.activo ? 'ACTIVA' : 'INACTIVA',
-                                style: TextStyle(
-                                  color: r.activo ? Colors.green : Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
