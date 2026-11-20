@@ -1,5 +1,6 @@
 import { ErrorHttp } from './manejo_errores.js';
 
+// Middleware que valida únicamente las partes de la solicitud que cuentan con un esquema.
 export function validarDatos({ cuerpo, parametros, consulta } = {}) {
   return (solicitud, _respuesta, siguiente) => {
     const resultado = {};
@@ -23,6 +24,7 @@ export function validarDatos({ cuerpo, parametros, consulta } = {}) {
       resultado[nombre] = validacion.data;
     }
 
+    // Se exponen los datos procesados por los esquemas, no solo los valores originales de la solicitud.
     solicitud.datosValidados = resultado;
     siguiente();
   };

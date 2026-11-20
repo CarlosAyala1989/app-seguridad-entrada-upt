@@ -1,3 +1,4 @@
+// Error de aplicación que transporta un código y un estado HTTP para la respuesta centralizada.
 export class ErrorHttp extends Error {
   constructor({ codigo, mensaje, estadoHttp = 500 }) {
     super(mensaje);
@@ -16,9 +17,11 @@ export function rutaNoEncontrada(solicitud, respuesta) {
 }
 
 export function manejarErrores(error, _solicitud, respuesta, _siguiente) {
+  // Los errores de análisis JSON se normalizan a un código de respuesta específico.
   const esJsonInvalido = error instanceof SyntaxError && error.status === 400;
   const estadoHttp = esJsonInvalido ? 400 : (error.estadoHttp ?? 500);
   const codigo = esJsonInvalido ? 'JSON_INVALIDO' : (error.codigo ?? 'ERROR_INTERNO');
+  // Las respuestas 5xx ocultan el detalle interno del error al cliente.
   const mensaje = esJsonInvalido
     ? 'El cuerpo de la solicitud debe ser un JSON válido.'
     : (estadoHttp >= 500 ? 'Ocurrió un error interno en el servidor.' : error.message);
