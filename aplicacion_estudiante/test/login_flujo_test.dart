@@ -39,7 +39,7 @@ void main() {
 
   test('(b) flujo exitoso: autentica y carga íntegra la autorización', () async {
     final verificacion = VerificacionIntranet(
-      codigo: '2026087688',
+      codigo: '2020000000',
       nombreApellidos: 'Estudiante de Prueba',
       escuelaProfesional: 'Ingeniería de Sistemas',
       verificacionIntranetId: 'ver-123',
@@ -67,7 +67,7 @@ void main() {
 
     await viewModel.verificarIntranet(
       transaccionId: 'trx-captcha-1',
-      codigo: '2026087688',
+      codigo: '2020000000',
       contrasena: '123456',
       captcha: 'AB12',
     );
@@ -85,7 +85,7 @@ void main() {
     verify(
       () => repository.verificarIntranet(
         transaccionId: 'trx-captcha-1',
-        codigo: '2026087688',
+        codigo: '2020000000',
         contrasena: '123456',
         captcha: 'AB12',
       ),
@@ -107,7 +107,7 @@ void main() {
 
     await viewModel.verificarIntranet(
       transaccionId: 'trx-captcha-1',
-      codigo: '2026087688',
+      codigo: '2020000000',
       contrasena: '000000',
       captcha: 'AB12',
     );

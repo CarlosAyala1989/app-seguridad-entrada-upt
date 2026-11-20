@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
           maxLength: 10,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
-            hintText: 'Ej. 2022074266',
+            hintText: 'Ej. 2020000000',
             prefixIcon: Icon(Icons.badge_outlined),
             counterText: '',
           ),

@@ -17,10 +17,10 @@ void main() {
           'token_renovacion_expira_en': '2026-09-25T12:00:00.000Z',
           'usuario': {
             'id': 10,
-            'codigo_institucional': '2022074266',
-            'correo_institucional': 'ca2022074266@virtual.upt.pe',
-            'nombres': 'CARLOS DANIEL',
-            'apellidos': 'AYALA RAMOS',
+            'codigo_institucional': '2020000000',
+            'correo_institucional': 'ep2020000000@virtual.upt.pe',
+            'nombres': 'JUAN ANDRES',
+            'apellidos': 'PEREZ GOMEZ',
             'roles': ['ESTUDIANTE'],
           },
         };
@@ -30,7 +30,7 @@ void main() {
 
         expect(entidad.tipoToken, 'Bearer');
         expect(entidad.tokenAcceso, 'acceso_123');
-        expect(entidad.usuario.codigoInstitucional, '2022074266');
+        expect(entidad.usuario.codigoInstitucional, '2020000000');
         expect(entidad.usuario.roles, contains('ESTUDIANTE'));
         expect(entidad.tieneRolPermitido, isTrue);
       },
@@ -38,21 +38,21 @@ void main() {
 
     test('VerificacionIntranetDto lee la escuela profesional', () {
       final entidad = VerificacionIntranetDto.fromJson({
-        'codigo': '2022074266',
-        'nombre_apellidos': 'AYALA RAMOS, CARLOS DANIEL',
+        'codigo': '2020000000',
+        'nombre_apellidos': 'PEREZ GOMEZ, JUAN ANDRES',
         'escuela_profesional': 'Ingeniería de Sistemas',
         'verificacion_intranet_id': '8bcdbcea-0682-4c77-a828-21855d6bcdfa',
         'verificacion_expira_en': '2026-10-26T19:10:00.000Z',
       }).toDomain();
 
       expect(entidad.escuelaProfesional, 'Ingeniería de Sistemas');
-      expect(entidad.nombreApellidos, 'AYALA RAMOS, CARLOS DANIEL');
+      expect(entidad.nombreApellidos, 'PEREZ GOMEZ, JUAN ANDRES');
     });
 
     test('VerificacionIntranetDto acepta escuela null o ausente', () {
       final base = {
-        'codigo': '2022074266',
-        'nombre_apellidos': 'AYALA RAMOS, CARLOS DANIEL',
+        'codigo': '2020000000',
+        'nombre_apellidos': 'PEREZ GOMEZ, JUAN ANDRES',
         'verificacion_intranet_id': '8bcdbcea-0682-4c77-a828-21855d6bcdfa',
         'verificacion_expira_en': '2026-10-26T19:10:00.000Z',
       };

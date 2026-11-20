@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 PerfilDigital _perfil({String verificacion = 'VERIFICADA'}) => PerfilDigital(
   nombreCompleto: 'Ana Pérez',
-  codigoInstitucional: '2026087688',
+  codigoInstitucional: '2020000000',
   correoInstitucional: 'ana@virtual.upt.pe',
   rol: 'Estudiante',
   escuela: 'Ingeniería de Sistemas',
@@ -31,7 +31,7 @@ void main() {
     await _mostrar(tester, _perfil());
 
     expect(find.text('ANA PÉREZ'), findsOneWidget);
-    expect(find.text('2026087688'), findsOneWidget);
+    expect(find.text('2020000000'), findsOneWidget);
     expect(find.text('ESTUDIANTE'), findsOneWidget);
     expect(find.text('Ingeniería de Sistemas'), findsOneWidget);
     expect(find.text('ana@virtual.upt.pe'), findsOneWidget);
