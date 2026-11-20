@@ -1,6 +1,7 @@
 import mariadb from 'mariadb';
 import { entorno } from './env.js';
 
+// Grupo compartido de conexiones para reutilizar conexiones a MariaDB entre operaciones.
 export const grupoConexiones = mariadb.createPool({
   host: entorno.db.host,
   port: entorno.db.port,
@@ -18,6 +19,7 @@ export const grupoConexiones = mariadb.createPool({
   bigIntAsNumber: true,
 });
 
+// Comprueba la disponibilidad mediante una consulta mínima; la conexión se devuelve al grupo incluso si falla.
 export async function verificarConexionBaseDatos() {
   let conexion;
 

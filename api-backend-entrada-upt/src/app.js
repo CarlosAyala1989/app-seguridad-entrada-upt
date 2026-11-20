@@ -19,6 +19,7 @@ import { crearEnrutadorNotificaciones } from './modulos/notificaciones/rutas/not
 import { crearEnrutadorRegistroEstudiante } from './modulos/registro_estudiante/rutas/registro_estudiante.rutas.js';
 import { enrutadorSalud } from './routes/salud.rutas.js';
 
+// La fábrica permite inyectar repositorios y servicios alternativos sin iniciar el servidor HTTP.
 export function crearAplicacion({
   configuracionAutenticacion = entorno.autenticacion,
   entornoEjecucion = entorno.nodeEnv,
@@ -49,14 +50,17 @@ export function crearAplicacion({
   aplicacion.disable('x-powered-by');
   aplicacion.use(helmet());
   aplicacion.use(cors({ origin: entorno.corsOrigin }));
+  // La validación del tipo de contenido precede a los analizadores del cuerpo.
   aplicacion.use(validarTipoContenidoJson);
   aplicacion.use(express.json({ limit: '1mb' }));
   aplicacion.use(express.urlencoded({ extended: false }));
 
   if (registrarSolicitudes) {
+    // El registro usa el patrón de ruta en lugar de la URL completa para evitar incluir parámetros de consulta.
     morgan.token('ruta-segura', (solicitud) => solicitud.route?.path ?? '/ruta-no-encontrada');
     aplicacion.use(morgan(':method :ruta-segura :status :response-time ms'));
   }
+  // Se indica a clientes e intermediarios que no deben almacenar las respuestas de la API.
   aplicacion.use('/api', (_solicitud, respuesta, siguiente) => {
     respuesta.set('Cache-Control', 'no-store');
     siguiente();
@@ -129,6 +133,7 @@ export function crearAplicacion({
     }),
   );
 
+  // Estos manejadores se registran al final, después de las rutas de los módulos.
   aplicacion.use(rutaNoEncontrada);
   aplicacion.use(manejarErrores);
 

@@ -3,6 +3,7 @@ import { verificarConexionBaseDatos } from '../config/database.js';
 
 export const enrutadorSalud = Router();
 
+// El estado de salud incluye una comprobación de MariaDB; si falla, se devuelve HTTP 503.
 enrutadorSalud.get('/', async (_solicitud, respuesta) => {
   try {
     await verificarConexionBaseDatos();
