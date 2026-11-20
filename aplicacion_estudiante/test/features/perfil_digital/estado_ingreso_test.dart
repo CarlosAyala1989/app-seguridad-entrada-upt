@@ -13,7 +13,7 @@ PerfilDigital _perfil({
   String acceso = 'AUTORIZADO',
 }) => PerfilDigital(
   nombreCompleto: 'Ana Pérez',
-  codigoInstitucional: '2026087688',
+  codigoInstitucional: '2020000000',
   correoInstitucional: 'ana@virtual.upt.pe',
   rol: 'ESTUDIANTE',
   escuela: 'Ingeniería de Sistemas',
@@ -24,7 +24,7 @@ PerfilDigital _perfil({
 
 Map<String, Object?> _json({Object? preparacion}) => {
   'nombre_completo': 'Ana Pérez',
-  'codigo_institucional': '2026087688',
+  'codigo_institucional': '2020000000',
   'correo_institucional': 'ana@virtual.upt.pe',
   'roles': ['ESTUDIANTE'],
   'verificacion': {'estado': 'VERIFICADA'},

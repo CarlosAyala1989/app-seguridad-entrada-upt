@@ -14,7 +14,7 @@ class _MockRepository extends Mock implements LoginEstudianteRepository {}
 
 const _usuario = Usuario(
   id: 1,
-  codigoInstitucional: '2026087688',
+  codigoInstitucional: '2020000000',
   correoInstitucional: 'estudiante@virtual.upt.pe',
   nombres: 'Ana',
   apellidos: 'Pérez',
