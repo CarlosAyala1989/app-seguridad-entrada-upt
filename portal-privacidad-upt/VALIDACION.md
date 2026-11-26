@@ -27,5 +27,14 @@ disponible. Antes de publicar, comprobar las páginas en Safari/iPhone, móvil y
 escritorio, completar el flujo real con una cuenta de prueba, configurar los
 respaldos/logs externos con máximo 30 días y seguir la guía de App Store.
 
-Las URL finales de la app siguen sin asignarse hasta recibir el dominio real.
-No se ha desplegado ni publicado el portal desde esta sesión.
+Las URL finales de la app usan `https://ingreso-upt.fottuto.men`. En la
+comprobación del despliegue del 26/11/2026, `/salud`, `/privacidad`, `/soporte`
+y `/eliminar-cuenta` respondieron HTTP 200 por HTTPS. El inicio de eliminación
+devolvió HTTP 503 y la API indicó `RESTRICCIONES_NO_CONFIGURADAS`: completar
+`CLAVE_RESTRICCIONES_IDENTIDAD`, confirmar las variables de Google y repetir
+el flujo real antes de publicar la app. No se inició sesión en Google ni se
+eliminó ninguna cuenta durante esta comprobación.
+
+También se observó que Cloudflare ocultaba el correo mediante un script
+incompatible con la CSP del portal. Se añade `Cache-Control: no-transform`;
+comprobar de nuevo el correo público tras desplegar esa corrección.

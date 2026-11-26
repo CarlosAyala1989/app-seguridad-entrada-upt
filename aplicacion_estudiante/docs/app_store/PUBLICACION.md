@@ -2,24 +2,43 @@
 
 Requisitos revisados el 26/11/2026. La aplicación de estudiante, la API y el
 portal público están preparados en el repositorio. **Todavía no enviar a revisión**:
-falta desplegar el portal y la API, configurar dominios y callback Google,
-verificar el servicio real, completar firma y probar en dispositivos Apple.
+el portal está publicado en `https://ingreso-upt.fottuto.men`, pero falta
+habilitar y verificar la eliminación en la API desplegada, confirmar el
+callback Google, completar firma y probar en dispositivos Apple.
 
 ## Pendientes externos
 
 | Pendiente | Resultado necesario |
 | --- | --- |
-| Privacidad | Desplegar `/privacidad` y verificar responsable, proveedores y tratamiento publicado; [texto y configuración](PRIVACIDAD_PARA_PUBLICAR.md). |
-| Soporte | Desplegar `/soporte`, con el correo público indicado por el responsable. |
-| Eliminación | Desplegar `/eliminar-cuenta` y configurar el nuevo callback Google. Probar una cuenta ficticia de principio a fin. |
+| Privacidad | `/privacidad` responde HTTP 200 por HTTPS. Confirmar proveedores y tratamiento publicado; [texto y configuración](PRIVACIDAD_PARA_PUBLICAR.md). |
+| Soporte | `/soporte` responde HTTP 200. Desplegar la corrección `Cache-Control: no-transform` para que Cloudflare no oculte el correo con JavaScript bloqueado por la CSP. |
+| Eliminación | `/eliminar-cuenta` responde HTTP 200, pero iniciar devuelve HTTP 503: `RESTRICCIONES_NO_CONFIGURADAS`. Completar las variables de la API y probar una cuenta ficticia de principio a fin. |
 | Servidor | Validar proveedores, retención y autorización institucional del dominio API actual, procedente del proyecto. |
 | Apple Developer | Equipo autorizado, registro de la app, certificados y perfiles de firma. |
 | Revisión | Cuenta de prueba accesible desde un dispositivo nuevo y posibilidad de revisar el QR fuera de Tacna. |
 
-Las tres URL legales se dejaron **vacías por indicación del usuario**. La app
-avisa al intentar abrirlas. Esto permite continuar el desarrollo, pero no satisface
-los requisitos de publicación. El responsable indicó nombre y correo públicos y
-un plazo de 30 días, incorporados en el portal y en el aviso de la app.
+Las tres URL legales están configuradas por defecto en la app y en
+`config/app_store.json`, incluido en Git con direcciones públicas. Se pueden
+sustituir con `--dart-define` o un JSON propio al compilar. No incluir secretos.
+El responsable indicó nombre y correo públicos y un plazo de 30 días,
+incorporados en el portal y en el aviso de la app.
+
+En **Environment de la API** deben estar los siguientes valores, conservando
+las credenciales existentes y el callback de inicio de sesión:
+
+```dotenv
+SITIO_PUBLICO_URL=https://ingreso-upt.fottuto.men
+GOOGLE_ELIMINACION_REDIRECT_URI=https://api-moviles.fottuto.men/api/cuenta/eliminacion/google/callback
+CLAVE_RESTRICCIONES_IDENTIDAD=PEGA_AQUI_LA_CLAVE_GENERADA
+```
+
+Generar la clave una sola vez con
+`node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`
+y pegar el resultado solo en la API; conservarlo entre despliegues y réplicas.
+No regenerarla si ya existe una clave válida: comprobar primero el valor
+configurado. Registrar el callback adicional en Google Cloud y volver a
+desplegar la API. El error observado indica que falta la clave o su formato
+no es válido; no confirma todavía la configuración de Google.
 
 El cliente abre `/eliminar-cuenta` en el nuevo portal. La API ya implementa
 verificación Google específica, confirmación y borrado transaccional real de
@@ -65,13 +84,12 @@ pruebas y comprobar compatibilidad con el Xcode elegido. No se compiló ni firm�
 un binario iOS en Linux.
 
 ```bash
-cp config/app_store.example.json config/app_store.json
-# Completar las tres URL legales y confirmar URL_API_UPT.
+# La configuración pública de producción ya está incluida.
 python3 scripts/verificar_app_store.py --config config/app_store.json
 bash scripts/compilar_app_store.sh config/app_store.json
 ```
 
-El JSON local se excluye de Git. Sus valores se incorporan al binario:
+El JSON de producción contiene solo URL públicas. Sus valores se incorporan al binario:
 **no incluir secretos ni credenciales**. El script ejecuta análisis, pruebas,
 compilación release y comprobación básica del archivo. No carga ni publica.
 Admite argumentos de `flutter build ipa` después del JSON, por ejemplo
@@ -93,7 +111,9 @@ API a Runner sin comprobar que los use directamente.
 ## App Store Connect
 
 1. Registrar nombre, Bundle ID, descripción, categoría, territorios, derechos de
-   contenido y contacto institucional. Completar URLs de privacidad y soporte.
+   contenido y contacto institucional. Usar
+   `https://ingreso-upt.fottuto.men/privacidad` para privacidad y
+   `https://ingreso-upt.fottuto.men/soporte` para soporte.
 2. Declarar privacidad según el inventario siguiente, el backend efectivo y el
    informe del archivo final. El manifiesto no completa este formulario por sí solo.
 3. Responder el cuestionario vigente de edad con las funciones reales. No marcar

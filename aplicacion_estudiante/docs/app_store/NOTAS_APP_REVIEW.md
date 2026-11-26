@@ -21,7 +21,8 @@ que corresponde al servicio ofrecido antes de enviar las notas.
 - Código y contraseña de intranet: [COMPLETAR SOLO EN APP STORE CONNECT].
 - Cuenta Google institucional y pasos para autorizar desde un dispositivo nuevo:
   [COMPLETAR SOLO EN APP STORE CONNECT].
-- Contacto disponible durante la revisión: [COMPLETAR].
+- Contacto disponible durante la revisión: Carlos Daniel Ayala Ramos,
+  ca2022074266@virtual.upt.pe. Confirmar disponibilidad antes del envío.
 - Pasos para probar generación y validación del QR fuera del campus: [COMPLETAR].
 - QR de ejemplo y recursos del lector/punto de control, si se necesitan:
   [ADJUNTAR SIN DATOS PERSONALES REALES].
@@ -42,7 +43,9 @@ a autenticarse con las credenciales institucionales.
 
 El aviso y la política están disponibles antes y después de iniciar sesión.
 Cuenta y ayuda → Eliminar mi cuenta abre la página específica de eliminación:
-[COMPLETAR URL Y VERIFICAR EL PROCESO REAL].
+https://ingreso-upt.fottuto.men/eliminar-cuenta.
+Verificar el proceso real antes del envío: el inicio devuelve actualmente
+HTTP 503 por `RESTRICCIONES_NO_CONFIGURADAS` en la API desplegada.
 
 La eliminación de cuentas exclusivas de estudiante requiere verificar el Google
 Workspace ya vinculado y confirmar expresamente el borrado. Se aplica a la base

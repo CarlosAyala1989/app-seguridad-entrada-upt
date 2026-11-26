@@ -45,7 +45,8 @@ export function crearServidor({ config = cargarConfiguracion(), solicitar = fetc
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Cache-Control', 'no-store');
+    // Evita que Cloudflare oculte el correo con un script bloqueado por la CSP.
+    res.setHeader('Cache-Control', 'no-store, no-transform');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     if (config.produccion) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     try {

@@ -44,15 +44,12 @@ void main() {
   });
 
   testWidgets(
-    'eliminar permite cancelar y abre exclusivamente la página específica',
+    'eliminar permite cancelar y abre la ruta pública del portal configurado',
     (tester) async {
       final abiertas = <Uri>[];
       await tester.pumpWidget(
         MaterialApp(
           home: CuentaAyudaPage(
-            config: const LegalConfig(
-              eliminarCuenta: 'https://upt.pe/cuenta/eliminar',
-            ),
             onVerAvisoPrivacidad: () {},
             abrirPagina: (uri) async {
               abiertas.add(uri);
@@ -72,7 +69,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text(AppStrings.continueLabel));
       await tester.pumpAndSettle();
-      expect(abiertas.single.toString(), 'https://upt.pe/cuenta/eliminar');
+      expect(
+        abiertas.single.toString(),
+        'https://ingreso-upt.fottuto.men/eliminar-cuenta',
+      );
       expect(abiertas.single.query, isEmpty);
       // Abrir la página no se presenta como una cuenta ya eliminada.
       expect(find.byType(CuentaAyudaPage), findsOneWidget);

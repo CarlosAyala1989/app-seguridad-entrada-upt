@@ -39,7 +39,7 @@ describe('Portal público y confirmación de eliminación', () => {
     for (const ruta of ['/', '/privacidad', '/soporte', '/eliminar-cuenta']) {
       const res = await fetch(`${base}${ruta}`);
       assert.equal(res.status, 200);
-      assert.equal(res.headers.get('cache-control'), 'no-store');
+      assert.equal(res.headers.get('cache-control'), 'no-store, no-transform');
       assert.ok(res.headers.get('content-security-policy').includes("form-action 'self'"));
       const html = await res.text();
       assert.ok(html.includes('Carlos Daniel Ayala Ramos'));

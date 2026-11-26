@@ -1,6 +1,7 @@
 # Política de privacidad para publicar
 
-La política completa se sirve en `/privacidad` desde el nuevo
+La política completa está publicada en
+[ingreso-upt.fottuto.men/privacidad](https://ingreso-upt.fottuto.men/privacidad) desde el
 [portal de privacidad](../../../portal-privacidad-upt/README.md).
 Su texto vive en `portal-privacidad-upt/src/paginas.js`; el aviso de la app es la
 versión 1.2, del 26/11/2026.
@@ -19,11 +20,14 @@ restricción de ingreso, se conserva por separado una referencia HMAC del códig
 y su caducidad, por máximo 30 días o hasta su vencimiento anterior, según la
 regla indicada por el responsable. Se informa como dato seudonimizado, no anónimo.
 
-Antes de publicar, desplegar el portal con HTTPS, configurar su URL y el callback
-Google en la API, identificar correctamente el alojamiento y comprobar el proceso
-real con una cuenta de prueba. Configurar por separado en Dokploy/proveedor el
+Las tres páginas públicas responden HTTP 200 por HTTPS. Antes de enviar la app,
+completar las variables de la API y el callback Google, identificar correctamente
+el alojamiento y comprobar el proceso real con una cuenta de prueba. El inicio
+de eliminación devuelve actualmente HTTP 503 (`RESTRICCIONES_NO_CONFIGURADAS`).
+Configurar por separado en Dokploy/proveedor el
 máximo de 30 días para respaldos, binlogs y logs; el código no administra esos
 servicios externos. Confirmar autorización de la UPT para las credenciales y marca.
 
-Las URL finales siguen vacías hasta que el usuario facilite el dominio. Una vez
-verificadas, incorporar las mismas en la configuración de la app y App Store Connect.
+Las URL finales están incorporadas en la app y en `config/app_store.json`.
+Usar las mismas en App Store Connect: `/privacidad` para la política y
+`/soporte` para soporte, bajo `https://ingreso-upt.fottuto.men`.

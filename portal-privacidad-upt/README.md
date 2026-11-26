@@ -39,6 +39,12 @@ de la API en una red Docker compartida; para direcciones públicas utiliza HTTPS
 El portal no recibe credenciales SQL ni el secreto de Google. Las llamadas a la
 API salen del servidor: no hay que ampliar CORS.
 
+Las páginas devuelven `Cache-Control: no-store, no-transform` para evitar que
+Cloudflare convierta el correo de soporte en un enlace que dependa de un script
+bloqueado por la política CSP. Después de desplegar, verificar que el correo y
+los enlaces `mailto:` se vean sin JavaScript.
+[Comportamiento documentado por Cloudflare](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/).
+
 Se ejecuta como usuario `node`, sin volúmenes, y tiene healthcheck `GET /salud`.
 Sin las dos URL configuradas no arranca en producción para evitar enlaces
 incorrectos. [Configuración Dockerfile de Dokploy](https://docs.dokploy.com/docs/core/applications/build-type).
