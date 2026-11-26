@@ -28,12 +28,14 @@ class CodigoQrPage extends StatefulWidget {
   State<CodigoQrPage> createState() => _CodigoQrPageState();
 }
 
-class _CodigoQrPageState extends State<CodigoQrPage> {
+class _CodigoQrPageState extends State<CodigoQrPage>
+    with WidgetsBindingObserver {
   bool _ubicacionExplicada = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.iniciarSinConexion) {
       Future<void>.microtask(widget.viewModel.generarSinConexion);
     } else {
@@ -44,11 +46,28 @@ class _CodigoQrPageState extends State<CodigoQrPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.viewModel.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      widget.viewModel.suspender();
+    } else if (state == AppLifecycleState.resumed &&
+        widget.iniciarSinConexion) {
+      widget.viewModel.generarSinConexion();
+    }
+  }
+
   Future<void> _generar() async {
+    if (widget.iniciarSinConexion) {
+      await widget.viewModel.generarSinConexion();
+      return;
+    }
     if (!_ubicacionExplicada) {
       final continuar = await confirmarUsoUbicacion(
         context,
@@ -494,11 +513,14 @@ class _InsigniaSinConexion extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off, size: 16, color: AppColors.dorado),
           const SizedBox(width: 6),
-          Text(
-            AppStrings.qrOfflineBadge,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.dorado,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              AppStrings.qrOfflineBadge,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: AppColors.dorado,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

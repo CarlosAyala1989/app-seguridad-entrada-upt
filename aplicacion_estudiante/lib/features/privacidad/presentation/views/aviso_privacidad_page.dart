@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/legal_config.dart';
+import '../../../../core/platform/abrir_pagina_publica.dart';
 import '../../../../shared/l10n/app_strings.dart';
 import '../../domain/entities/aviso_privacidad.dart';
 
@@ -17,6 +19,21 @@ class AvisoPrivacidadPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            TextButton.icon(
+              onPressed: () async {
+                final uri = LegalConfig.uriPublica(
+                  const LegalConfig().privacidad,
+                );
+                final abierta = uri != null && await abrirPaginaPublica(uri);
+                if (!abierta && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text(AppStrings.pageOpenError)),
+                  );
+                }
+              },
+              icon: const Icon(Icons.open_in_browser),
+              label: const Text(AppStrings.publicPrivacyPolicy),
+            ),
             Text(
               '${AppStrings.privacyVersion} ${aviso.version} · '
               '${AppStrings.privacySince} ${aviso.vigenteDesdeTexto}',
@@ -24,7 +41,10 @@ class AvisoPrivacidadPage extends StatelessWidget {
             ),
             for (final seccion in aviso.secciones) ...[
               const SizedBox(height: 24),
-              Text(seccion.titulo, style: textos.titleMedium),
+              Semantics(
+                header: true,
+                child: Text(seccion.titulo, style: textos.titleMedium),
+              ),
               for (final parrafo in seccion.parrafos) ...[
                 const SizedBox(height: 8),
                 Text(parrafo, style: textos.bodyMedium),

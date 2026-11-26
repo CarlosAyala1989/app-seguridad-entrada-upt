@@ -1,5 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'secure_storage_options.dart';
+
 final class SessionTokensData {
   const SessionTokensData({
     required this.tokenAcceso,
@@ -21,7 +23,7 @@ final class SessionTokensData {
 
 final class SecureSessionStorage {
   const SecureSessionStorage({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = almacenamientoSeguro,
   }) : _storage = storage;
 
   final FlutterSecureStorage _storage;

@@ -3,13 +3,15 @@ import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/auth/secure_storage_options.dart';
+
 import '../../domain/entities/vinculacion_qr_offline.dart';
 
 /// Guarda en el almacenamiento seguro el identificador de esta instalación y
 /// la vinculación del QR sin conexión.
 final class QrOfflineLocalDataSource {
   QrOfflineLocalDataSource({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = almacenamientoSeguro,
     Random? random,
   }) : _storage = storage,
        _random = random ?? Random.secure();

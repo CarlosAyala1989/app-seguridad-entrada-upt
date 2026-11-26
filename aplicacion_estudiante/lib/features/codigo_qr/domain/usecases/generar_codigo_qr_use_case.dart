@@ -16,8 +16,16 @@ final class GenerarCodigoQrUseCase {
   final ObtenerUbicacionConfiableUseCase _obtenerUbicacion;
   final CodigoQrRepository _repository;
 
-  Future<CodigoQr> call() async {
+  Future<CodigoQr> call({bool Function()? puedeContinuar}) async {
+    if (puedeContinuar?.call() == false) {
+      throw StateError('Generación de QR cancelada');
+    }
     final ubicacion = await _obtenerUbicacion();
+    // Una lectura iniciada en primer plano puede terminar después de salir.
+    // En ese caso sus coordenadas no se envían al servidor.
+    if (puedeContinuar?.call() == false) {
+      throw StateError('Generación de QR cancelada');
+    }
     return _repository.generar(ubicacion);
   }
 }

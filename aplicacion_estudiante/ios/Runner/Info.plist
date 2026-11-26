@@ -3,11 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Face ID protege el acceso a tu identidad digital en este teléfono. Tu rostro nunca sale del dispositivo.</string>
+	<string>Si activas el bloqueo biométrico, Face ID te permite desbloquear tu identidad digital UPT. La app solo recibe el resultado de la verificación y no accede a tu rostro.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>La ubicación permite comprobar el punto de acceso antes de emitir tu código QR temporal.</string>
+	<string>Al generar y renovar tu QR de ingreso, la app envía tu ubicación precisa al servicio de identidad para comprobar que estás en una zona autorizada del campus UPT. Solo se consulta con esta pantalla abierta y la app en primer plano.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>es</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Identidad UPT</string>
 	<key>CFBundleExecutable</key>

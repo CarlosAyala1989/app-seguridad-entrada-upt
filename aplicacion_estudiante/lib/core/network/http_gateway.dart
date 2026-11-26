@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../shared/l10n/app_strings.dart';
@@ -59,7 +60,14 @@ final class ApiHttpGateway implements HttpGateway {
 
   Uri _construirUri(String path) {
     final pathLimpio = path.startsWith('/') ? path : '/$path';
-    return Uri.parse('$_baseUrlNormalizada$pathLimpio');
+    final uri = Uri.parse('$_baseUrlNormalizada$pathLimpio');
+    if (uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        (kReleaseMode && uri.scheme != 'https') ||
+        (uri.scheme != 'http' && uri.scheme != 'https')) {
+      throw const NetworkFailure('No se pudo establecer una conexión segura.');
+    }
+    return uri;
   }
 
   @override
@@ -110,6 +118,8 @@ final class ApiHttpGateway implements HttpGateway {
     final limite = timeout ?? this.timeout;
     try {
       final request = http.Request(method, _construirUri(path));
+      // No reenviar credenciales a un destino decidido por una redirección.
+      request.followRedirects = false;
       request.headers.addAll({'accept': 'application/json', ...headers});
       if (body != null) {
         request.headers['content-type'] = 'application/json; charset=utf-8';

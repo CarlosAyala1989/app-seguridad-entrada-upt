@@ -11,6 +11,38 @@ import '../viewmodels/login_view_model_test.dart';
 
 void main() {
   testWidgets(
+    'login y explicación de datos admiten texto grande en iPhone pequeño',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = FakeLoginEstudianteRepository();
+      final viewModel = LoginViewModel(
+        obtenerCaptchaUseCase: ObtenerCaptchaUseCase(repository),
+        verificarIntranetUseCase: VerificarIntranetUseCase(repository),
+        iniciarGoogleUseCase: IniciarGoogleUseCase(repository),
+        consultarEstadoGoogleUseCase: ConsultarEstadoGoogleUseCase(repository),
+      );
+      addTearDown(viewModel.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: LoginPage(viewModel: viewModel, onVerAvisoPrivacidad: () {}),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(AppStrings.loginDataNotice));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'LoginPage renderiza inputs de credenciales y botón de continuar',
     (tester) async {
       final repository = FakeLoginEstudianteRepository();
@@ -31,7 +63,7 @@ void main() {
       expect(find.text(AppStrings.loginTitle), findsOneWidget);
       expect(find.textContaining('Paso 1 de 2'), findsOneWidget);
       expect(find.byType(TextField), findsNWidgets(3));
-      expect(find.byType(FilledButton), findsOneWidget);
+      expect(find.text(AppStrings.loginVerify), findsOneWidget);
 
       viewModel.dispose();
     },

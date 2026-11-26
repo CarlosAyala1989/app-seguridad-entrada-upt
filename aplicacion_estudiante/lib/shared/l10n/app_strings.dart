@@ -72,8 +72,10 @@ final class AppStrings {
   static const locationWhyTitle = 'Usaremos tu ubicación';
   static const locationWhyBody =
       'Al generar tu código QR enviamos tu ubicación actual para comprobar '
-      'que estás en una zona permitida del campus. No se guarda en el '
-      'código QR ni se muestra a nadie.';
+      'que estás en una zona permitida del campus. El servicio de identidad '
+      'registra las coordenadas junto al código emitido. Se consulta mientras '
+      'esta pantalla está abierta y activa; no se incluye en el QR. '
+      'Puedes negar el permiso y seguir consultando tu identidad e historial.';
   static const notNow = 'Ahora no';
   static const continueLabel = 'Continuar';
   static const qrTitle = 'Mi código QR';
@@ -131,6 +133,37 @@ final class AppStrings {
   static const privacyVersion = 'Versión';
   static const privacySince = 'vigente desde el';
   static const moreInfo = 'Más información';
+  static const accountHelpTitle = 'Cuenta y ayuda';
+  static const publicPrivacyPolicy = 'Política de privacidad en línea';
+  static const supportTitle = 'Soporte y consultas sobre mis datos';
+  static const institutionalAccountNotice =
+      'El acceso requiere una cuenta académica y un correo institucional '
+      '@virtual.upt.pe existentes. La app registra tu identidad digital '
+      'después de verificarlos.';
+  static const loginDataNotice =
+      'Al verificar, envías tu código, contraseña y CAPTCHA al servicio de '
+      'identidad para validarlos con la intranet de la UPT. La app no guarda '
+      'tu contraseña. Después confirmarás tu correo institucional con Google.';
+  static const permissionSettings = 'Gestionar permisos del teléfono';
+  static const permissionSettingsHelp =
+      'Puedes retirar el permiso de ubicación en Ajustes. La biometría '
+      'es opcional y se configura desde tu identidad digital.';
+  static const settingsOpenError =
+      'Abre los ajustes de tu teléfono para gestionar los permisos de la app.';
+  static const deleteAccount = 'Eliminar mi cuenta';
+  static const deleteAccountHelp =
+      'Abre la página de eliminación de tu cuenta de identidad digital.';
+  static const deleteAccountExplanation =
+      'Continuar abre la página de la institución donde podrás confirmar '
+      'la eliminación de tu cuenta de esta aplicación y sus datos asociados. '
+      'Allí podrás consultar qué datos se conservan temporalmente, '
+      'con qué finalidad y durante cuánto tiempo.\n\n'
+      'Cerrar sesión o desinstalar la app solo retira el acceso desde este '
+      'teléfono; no elimina la cuenta del servicio.';
+  static const pageUnavailable =
+      'Esta página aún no está disponible. Inténtalo más tarde.';
+  static const pageOpenError =
+      'No se pudo abrir la página. Verifica tu conexión e inténtalo otra vez.';
   static const historyTitle = 'Mi historial de ingresos';
   static const historyAll = 'Todos';
   static const historyEntries = 'Ingresos';

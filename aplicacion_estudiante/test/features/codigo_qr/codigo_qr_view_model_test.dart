@@ -7,10 +7,12 @@ import 'package:aplicacion_estudiante/features/codigo_qr/domain/usecases/generar
 import 'package:aplicacion_estudiante/features/codigo_qr/domain/usecases/revocar_codigo_qr_use_case.dart';
 import 'package:aplicacion_estudiante/features/codigo_qr/presentation/states/codigo_qr_state.dart';
 import 'package:aplicacion_estudiante/features/codigo_qr/presentation/viewmodels/codigo_qr_view_model.dart';
+import 'package:aplicacion_estudiante/features/codigo_qr/presentation/views/codigo_qr_page.dart';
 import 'package:aplicacion_estudiante/features/ubicacion/domain/entities/ubicacion_dispositivo.dart';
 import 'package:aplicacion_estudiante/features/ubicacion/domain/repositories/ubicacion_repository.dart';
 import 'package:aplicacion_estudiante/features/ubicacion/domain/usecases/obtener_ubicacion_confiable_use_case.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 
 /// Temporizador que solo avanza cuando el test lo pide.
 final class _TemporizadorManual implements Timer {
@@ -36,14 +38,18 @@ final class _Ubicacion implements UbicacionRepository {
 
   final DateTime Function() ahora;
 
+  Completer<UbicacionDispositivo>? pendiente;
+
   @override
   Future<UbicacionDispositivo> obtenerUbicacionActual() async =>
-      UbicacionDispositivo(
-        latitud: -18.013,
-        longitud: -70.251,
-        precisionMetros: 5,
-        obtenidaEn: ahora(),
-      );
+      pendiente != null
+      ? pendiente!.future
+      : UbicacionDispositivo(
+          latitud: -18.013,
+          longitud: -70.251,
+          precisionMetros: 5,
+          obtenidaEn: ahora(),
+        );
 }
 
 final class _Repositorio implements CodigoQrRepository {
@@ -54,12 +60,14 @@ final class _Repositorio implements CodigoQrRepository {
   Failure? fallaAlGenerar;
   Failure? fallaAlRevocar;
   Duration vigencia = const Duration(seconds: 30);
+  Future<void>? esperaGeneracion;
 
   @override
   Future<CodigoQr> generar(UbicacionDispositivo ubicacion) async {
     final f = fallaAlGenerar;
     if (f != null) throw f;
     generados++;
+    await esperaGeneracion;
     return CodigoQr(
       contenido: 'qr-$generados',
       estado: 'PENDIENTE',
@@ -83,15 +91,17 @@ void main() {
   late _Repositorio repo;
   late List<_TemporizadorManual> temporizadores;
   late CodigoQrViewModel vm;
+  late _Ubicacion ubicacion;
 
   setUp(() {
     ahora = DateTime(2026, 10, 15, 12);
     repo = _Repositorio(() => ahora);
     temporizadores = [];
+    ubicacion = _Ubicacion(() => ahora);
     vm = CodigoQrViewModel(
       generarCodigoQr: GenerarCodigoQrUseCase(
         obtenerUbicacion: ObtenerUbicacionConfiableUseCase(
-          _Ubicacion(() => ahora),
+          ubicacion,
           ahora: () => ahora,
         ),
         repository: repo,
@@ -184,5 +194,69 @@ void main() {
 
   test('sin código visible no hay nada que anular', () async {
     expect(await vm.revocar(), isFalse);
+  });
+
+  test('salir de primer plano cancela las renovaciones del QR', () async {
+    await vm.generar();
+    vm.suspender();
+    expect(temporizadores.single.cancelado, isTrue);
+    expect(vm.rotacionAutomatica, isFalse);
+    ahora = ahora.add(const Duration(seconds: 31));
+    temporizadores.single.sonar();
+    await pumpEventQueue();
+    expect(repo.generados, 1);
+    expect(vm.currentState, isA<CodigoQrInicial>());
+  });
+
+  testWidgets(
+    'la pantalla suspende el QR al ocultarse y no renueva al volver',
+    (tester) async {
+      await tester.pumpWidget(MaterialApp(home: CodigoQrPage(viewModel: vm)));
+      await vm.generar();
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      expect(vm.currentState, isA<CodigoQrInicial>());
+      expect(temporizadores.single.cancelado, isTrue);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(repo.generados, 1);
+      // Desmontar cancela la suscripción antes de esperar el cierre del stream.
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  test(
+    'no envía coordenadas si la lectura termina fuera de primer plano',
+    () async {
+      ubicacion.pendiente = Completer<UbicacionDispositivo>();
+      final generacion = vm.generar();
+      vm.suspender();
+      ubicacion.pendiente!.complete(
+        UbicacionDispositivo(
+          latitud: -18.013,
+          longitud: -70.251,
+          precisionMetros: 5,
+          obtenidaEn: ahora,
+        ),
+      );
+      await generacion;
+      expect(repo.generados, 0);
+      expect(temporizadores, isEmpty);
+      expect(vm.currentState, isA<CodigoQrInicial>());
+    },
+  );
+
+  test('una respuesta tardía no reactiva el QR después de suspender', () async {
+    final pendiente = Completer<void>();
+    repo.esperaGeneracion = pendiente.future;
+    final generacion = vm.generar();
+    await pumpEventQueue();
+    expect(repo.generados, 1);
+    vm.suspender();
+    pendiente.complete();
+    await generacion;
+    expect(temporizadores, isEmpty);
+    expect(vm.currentState, isA<CodigoQrInicial>());
   });
 }

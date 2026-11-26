@@ -11,10 +11,16 @@ import '../viewmodels/login_view_model.dart';
 import '../widgets/login_widgets.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({required this.viewModel, this.onLoginExitoso, super.key});
+  const LoginPage({
+    required this.viewModel,
+    this.onLoginExitoso,
+    this.onVerAvisoPrivacidad,
+    super.key,
+  });
 
   final LoginViewModel viewModel;
   final ValueChanged<Usuario>? onLoginExitoso;
+  final VoidCallback? onVerAvisoPrivacidad;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -39,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
     _codigoController.dispose();
     _contrasenaController.dispose();
     _captchaController.dispose();
+    widget.viewModel.dispose();
     super.dispose();
   }
 
@@ -84,7 +91,16 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       // Sin título: el encabezado con el escudo ya dice dónde estamos. La
       // barra queda para la flecha de "atrás" hacia la bienvenida.
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          if (widget.onVerAvisoPrivacidad != null)
+            IconButton(
+              onPressed: widget.onVerAvisoPrivacidad,
+              tooltip: AppStrings.privacyTitle,
+              icon: const Icon(Icons.privacy_tip_outlined),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: StreamBuilder<LoginState>(
           stream: widget.viewModel.estado,
@@ -157,6 +173,7 @@ class _LoginPageState extends State<LoginPage> {
           controller: _codigoController,
           enabled: !estaVerificando,
           keyboardType: TextInputType.number,
+          autofillHints: const [AutofillHints.username],
           maxLength: 10,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
@@ -173,6 +190,9 @@ class _LoginPageState extends State<LoginPage> {
           enabled: !estaVerificando,
           keyboardType: TextInputType.number,
           obscureText: _ocultarContrasena,
+          enableSuggestions: false,
+          autocorrect: false,
+          autofillHints: const [AutofillHints.password],
           maxLength: 6,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
@@ -228,7 +248,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 12),
-                        Text('Cargando CAPTCHA...'),
+                        Flexible(child: Text('Cargando CAPTCHA...')),
                       ],
                     ),
                   ),
@@ -279,6 +299,13 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         const SizedBox(height: 24),
+        Text(AppStrings.loginDataNotice, style: textos.bodySmall),
+        if (widget.onVerAvisoPrivacidad != null)
+          TextButton(
+            onPressed: widget.onVerAvisoPrivacidad,
+            child: const Text(AppStrings.privacyTitle),
+          ),
+        const SizedBox(height: 16),
         FilledButton.icon(
           onPressed: estaVerificando || estaCargandoCaptcha
               ? null
@@ -410,8 +437,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Completa la autenticación en el navegador y regresa a '
-                  'esta pantalla.',
+                  'Completa la autenticación con Google y cierra la ventana '
+                  'para regresar a esta pantalla.',
                   textAlign: TextAlign.center,
                   style: textos.bodySmall?.copyWith(
                     color: AppColors.textoSecundario,

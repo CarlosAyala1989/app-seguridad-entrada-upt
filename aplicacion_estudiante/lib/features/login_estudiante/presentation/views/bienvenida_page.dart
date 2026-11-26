@@ -12,11 +12,13 @@ class BienvenidaPage extends StatelessWidget {
   const BienvenidaPage({
     required this.onIniciarSesion,
     this.onVerAvisoPrivacidad,
+    this.onVerCuentaAyuda,
     super.key,
   });
 
   final VoidCallback onIniciarSesion;
   final VoidCallback? onVerAvisoPrivacidad;
+  final VoidCallback? onVerCuentaAyuda;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +84,12 @@ class BienvenidaPage extends StatelessWidget {
                       label: const Text(AppStrings.welcomePrivacy),
                     ),
                   ],
+                  if (onVerCuentaAyuda != null)
+                    TextButton.icon(
+                      onPressed: onVerCuentaAyuda,
+                      icon: const Icon(Icons.help_outline),
+                      label: const Text(AppStrings.accountHelpTitle),
+                    ),
                   const SizedBox(height: 32),
                   const _PieInstitucional(),
                 ],
@@ -110,12 +118,15 @@ class _InsigniaOficial extends StatelessWidget {
         children: [
           const Icon(Icons.verified_user, size: 16, color: AppColors.azulUpt),
           const SizedBox(width: 6),
-          Text(
-            AppStrings.welcomeBadge.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.azulUpt,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+          Flexible(
+            child: Text(
+              AppStrings.welcomeBadge.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: AppColors.azulUpt,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ],

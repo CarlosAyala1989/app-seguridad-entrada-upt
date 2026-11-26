@@ -47,6 +47,9 @@ final class CodigoQrViewModel {
   Timer? _temporizador;
   bool _rotacionAutomatica = false;
   bool _descartado = false;
+  int _operacion = 0;
+
+  bool _vigente(int operacion) => !_descartado && _operacion == operacion;
 
   Stream<CodigoQrState> get states => _states.stream;
   bool get rotacionAutomatica => _rotacionAutomatica;
@@ -68,13 +71,14 @@ final class CodigoQrViewModel {
   Future<void> generarSinConexion() async {
     final obtener = _obtenerVinculacionOffline;
     if (obtener == null || _descartado) return;
+    final operacion = ++_operacion;
     _cancelarTemporizador();
     _codigo = null;
     _rotacionAutomatica = false;
     _emit(const CodigoQrCargando());
     try {
       final vinculacion = await obtener();
-      if (_descartado) return;
+      if (!_vigente(operacion)) return;
       _vinculacion = vinculacion;
       _actualizarOffline();
       _temporizador = _crearTemporizador(
@@ -82,8 +86,10 @@ final class CodigoQrViewModel {
         (_) => _actualizarOffline(),
       );
     } on Failure catch (failure) {
+      if (!_vigente(operacion)) return;
       _emit(CodigoQrError(failure.message));
     } catch (_) {
+      if (!_vigente(operacion)) return;
       _emit(const CodigoQrError(AppStrings.qrGenerateError));
     }
   }
@@ -106,13 +112,16 @@ final class CodigoQrViewModel {
   /// Pide un código nuevo. Con [rotacionAutomatica], al vencer se pide otro.
   Future<void> generar({bool rotacionAutomatica = true}) async {
     if (currentState is CodigoQrCargando || _descartado) return;
+    final operacion = ++_operacion;
     _cancelarTemporizador();
     _vinculacion = null;
     _rotacionAutomatica = rotacionAutomatica;
     _emit(const CodigoQrCargando());
     try {
-      final codigo = await _generarCodigoQr();
-      if (_descartado) return;
+      final codigo = await _generarCodigoQr(
+        puedeContinuar: () => _vigente(operacion),
+      );
+      if (!_vigente(operacion)) return;
       if (!codigo.estaVigente(_ahora())) {
         // Evita pedir códigos sin fin si el reloj del teléfono está mal.
         _rotacionAutomatica = false;
@@ -126,8 +135,8 @@ final class CodigoQrViewModel {
         (_) => _actualizar(),
       );
     } on NetworkFailure catch (failure) {
+      if (!_vigente(operacion)) return;
       _rotacionAutomatica = false;
-      if (_descartado) return;
       if (admiteSinConexion) {
         // Sin internet: se pasa al QR calculado en el teléfono.
         await generarSinConexion();
@@ -135,9 +144,11 @@ final class CodigoQrViewModel {
         _emit(CodigoQrError(failure.message));
       }
     } on Failure catch (failure) {
+      if (!_vigente(operacion)) return;
       _rotacionAutomatica = false;
       _emit(CodigoQrError(failure.message));
     } catch (_) {
+      if (!_vigente(operacion)) return;
       _rotacionAutomatica = false;
       _emit(const CodigoQrError(AppStrings.qrGenerateError));
     }
@@ -147,6 +158,7 @@ final class CodigoQrViewModel {
   Future<bool> revocar() async {
     final estado = currentState;
     if (estado is! CodigoQrVisible || estado.revocando) return false;
+    final operacion = _operacion;
     _emit(
       CodigoQrVisible(
         codigo: estado.codigo,
@@ -156,14 +168,14 @@ final class CodigoQrViewModel {
     );
     try {
       await _revocarCodigoQr();
-      if (_descartado) return false;
+      if (!_vigente(operacion)) return false;
       _rotacionAutomatica = false;
       _cancelarTemporizador();
       _codigo = null;
       _emit(const CodigoQrInicial());
       return true;
     } catch (error) {
-      if (_descartado) return false;
+      if (!_vigente(operacion)) return false;
       final codigo = _codigo;
       if (codigo != null) {
         _emit(
@@ -210,12 +222,25 @@ final class CodigoQrViewModel {
     _temporizador = null;
   }
 
+  /// Detiene las renovaciones y descarta las lecturas pendientes al salir
+  /// de primer plano. Volver a generar requiere otra acción del estudiante.
+  void suspender() {
+    if (_descartado) return;
+    _operacion++;
+    _rotacionAutomatica = false;
+    _cancelarTemporizador();
+    _codigo = null;
+    _vinculacion = null;
+    _emit(const CodigoQrInicial());
+  }
+
   void _emit(CodigoQrState state) {
     currentState = state;
     if (!_states.isClosed) _states.add(state);
   }
 
   Future<void> dispose() {
+    if (_descartado) return Future<void>.value();
     _descartado = true;
     _cancelarTemporizador();
     return _states.close();

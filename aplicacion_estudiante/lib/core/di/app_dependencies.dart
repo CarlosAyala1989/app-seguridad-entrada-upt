@@ -51,6 +51,7 @@ import '../../features/perfil_digital/presentation/viewmodels/perfil_digital_vie
 import '../../features/perfil_digital/presentation/views/perfil_digital_page.dart';
 import '../../features/privacidad/data/aviso_privacidad_vigente.dart';
 import '../../features/privacidad/presentation/views/aviso_privacidad_page.dart';
+import '../../features/privacidad/presentation/views/cuenta_ayuda_page.dart';
 import '../../features/ubicacion/data/repositories/ubicacion_repository_impl.dart';
 import '../../features/ubicacion/domain/repositories/ubicacion_repository.dart';
 import '../../features/ubicacion/domain/usecases/obtener_ubicacion_confiable_use_case.dart';
@@ -155,6 +156,7 @@ final class AppDependencies {
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => buildLoginPage())),
         onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+        onVerCuentaAyuda: () => abrirCuentaAyuda(context),
       ),
     );
   }
@@ -173,6 +175,7 @@ final class AppDependencies {
       builder: (context) {
         return LoginPage(
           viewModel: loginViewModel,
+          onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
           onLoginExitoso: (usuario) {
             // La bienvenida y el login salen de la pila: con "atrás" no se
             // vuelve a ellos.
@@ -214,6 +217,7 @@ final class AppDependencies {
             ),
           ),
           onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+          onVerCuentaAyuda: () => abrirCuentaAyuda(context),
           onVerHistorial: () => Navigator.of(
             context,
           ).push(MaterialPageRoute<void>(builder: (_) => buildHistorialPage())),
@@ -330,6 +334,17 @@ final class AppDependencies {
         viewModel: viewModel,
         onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
         iniciarSinConexion: sinConexion,
+      ),
+    );
+  }
+
+  /// Accesos a privacidad, soporte y eliminación de la cuenta del servicio.
+  static void abrirCuentaAyuda(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => CuentaAyudaPage(
+          onVerAvisoPrivacidad: () => abrirAvisoPrivacidad(context),
+        ),
       ),
     );
   }

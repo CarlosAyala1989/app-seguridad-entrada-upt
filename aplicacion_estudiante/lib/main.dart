@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/di/app_dependencies.dart';
 import 'shared/l10n/app_strings.dart';
@@ -29,6 +30,9 @@ class IngresoUptApp extends StatelessWidget {
       title: AppStrings.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      locale: const Locale('es', 'PE'),
+      supportedLocales: const [Locale('es', 'PE')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       navigatorKey: appReal ? AppDependencies.navigatorKey : null,
       // El bloqueo con biometría (US-22) cubre todas las pantallas.
       builder: appReal ? AppDependencies.envolverConBloqueo : null,

@@ -1,16 +1,22 @@
-# aplicacion_estudiante
+# Identidad UPT — aplicación de estudiante
 
-A new Flutter project.
+Aplicación Flutter de identidad digital, QR de ingreso, historial y avisos.
+Este directorio contiene exclusivamente la aplicación de estudiante.
 
-## Getting Started
+```bash
+flutter pub get
+flutter analyze
+flutter test
+```
 
-This project is a starting point for a Flutter application.
+La configuración y los pendientes de publicación iOS se encuentran en
+[docs/app_store/PUBLICACION.md](docs/app_store/PUBLICACION.md).
+Las URL de privacidad, soporte y eliminación están vacías por ahora en
+[config/app_store.example.json](config/app_store.example.json).
+La página oficial debe permitir la eliminación real antes del envío a revisión.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+python3 scripts/verificar_app_store.py --source-only
+# En un Mac, después de completar configuración y firma:
+bash scripts/compilar_app_store.sh config/app_store.json
+```

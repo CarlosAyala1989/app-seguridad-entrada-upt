@@ -105,6 +105,67 @@ void main() {
       expect(viewModel.estadoActual, isA<LoginInitialState>());
     });
 
+    test(
+      'si el navegador devuelve false, no inicia la espera de Google',
+      () async {
+        final vm = LoginViewModel(
+          obtenerCaptchaUseCase: ObtenerCaptchaUseCase(repository),
+          verificarIntranetUseCase: VerificarIntranetUseCase(repository),
+          iniciarGoogleUseCase: IniciarGoogleUseCase(repository),
+          consultarEstadoGoogleUseCase: ConsultarEstadoGoogleUseCase(
+            repository,
+          ),
+          abrirAutorizacion: (_) async => false,
+        );
+        addTearDown(vm.dispose);
+        await vm.ejecutarContinuarGoogle(
+          urlAutorizacion: Uri.parse(
+            'https://accounts.google.com/o/oauth2/v2/auth',
+          ),
+          transaccionId: 'test',
+          expiraEn: DateTime.now().add(const Duration(minutes: 1)),
+        );
+        expect(vm.estadoActual, isA<LoginErrorState>());
+        expect(repository.consultasGoogle, 0);
+      },
+    );
+
+    test(
+      'rechaza enlaces de autorización que no sean de Google por HTTPS',
+      () async {
+        var llamadas = 0;
+        final vm = LoginViewModel(
+          obtenerCaptchaUseCase: ObtenerCaptchaUseCase(repository),
+          verificarIntranetUseCase: VerificarIntranetUseCase(repository),
+          iniciarGoogleUseCase: IniciarGoogleUseCase(repository),
+          consultarEstadoGoogleUseCase: ConsultarEstadoGoogleUseCase(
+            repository,
+          ),
+          abrirAutorizacion: (_) async {
+            llamadas++;
+            return true;
+          },
+        );
+        addTearDown(vm.dispose);
+        for (final url in [
+          'http://accounts.google.com',
+          'https://accounts.google.com.example.org',
+          'https://usuario@accounts.google.com',
+          'javascript:alert(1)',
+        ]) {
+          expect(await vm.abrirNavegadorGoogle(Uri.parse(url)), isFalse);
+        }
+        expect(llamadas, 0);
+        expect(
+          await vm.abrirNavegadorGoogle(
+            Uri.parse('https://accounts.google.com/o/oauth2/v2/auth'),
+          ),
+          isTrue,
+        );
+        expect(llamadas, 1);
+      },
+    );
+
     test('cargarCaptcha transiciona a cargando y luego a listo', () async {
       final estados = <LoginState>[];
       final sub = viewModel.estado.listen(estados.add);

@@ -73,7 +73,8 @@ class _BloqueoBiometricoGateState extends State<BloqueoBiometricoGate>
     final bloquear = await widget.debeBloquear();
     if (!mounted) return;
     setState(
-      () => _estado = bloquear ? _EstadoBloqueo.bloqueado : _EstadoBloqueo.libre,
+      () =>
+          _estado = bloquear ? _EstadoBloqueo.bloqueado : _EstadoBloqueo.libre,
     );
     if (bloquear) await _desbloquear();
   }
@@ -235,12 +236,15 @@ class _InsigniaBiometrica extends StatelessWidget {
         children: [
           const Icon(Icons.verified_user, size: 16, color: AppColors.azulUpt),
           const SizedBox(width: 6),
-          Text(
-            AppStrings.lockedBadge.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.azulUpt,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+          Flexible(
+            child: Text(
+              AppStrings.lockedBadge.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: AppColors.azulUpt,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ],

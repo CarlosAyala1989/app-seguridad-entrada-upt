@@ -14,6 +14,7 @@ class PerfilDigitalPage extends StatefulWidget {
     this.onCerrarSesion,
     this.onVerCodigoQr,
     this.onVerAvisoPrivacidad,
+    this.onVerCuentaAyuda,
     this.onVerHistorial,
     this.ajustes,
     this.accionExtra,
@@ -31,6 +32,7 @@ class PerfilDigitalPage extends StatefulWidget {
 
   /// Abre el aviso de privacidad; si es `null` no se muestra el botón.
   final VoidCallback? onVerAvisoPrivacidad;
+  final VoidCallback? onVerCuentaAyuda;
 
   /// Abre el historial personal de ingresos (US-14).
   final VoidCallback? onVerHistorial;
@@ -99,6 +101,12 @@ class _PerfilDigitalPageState extends State<PerfilDigitalPage> {
         centerTitle: false,
         actions: [
           if (widget.accionExtra != null) widget.accionExtra!,
+          if (widget.onVerCuentaAyuda != null)
+            IconButton(
+              icon: const Icon(Icons.manage_accounts_outlined),
+              tooltip: AppStrings.accountHelpTitle,
+              onPressed: widget.onVerCuentaAyuda,
+            ),
           if (widget.onVerAvisoPrivacidad != null)
             IconButton(
               icon: const Icon(Icons.privacy_tip_outlined),

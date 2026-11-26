@@ -34,16 +34,16 @@ void main() {
     });
   });
 
-  testWidgets('la pantalla muestra la versión y cada apartado', (
-    tester,
-  ) async {
+  testWidgets('la pantalla muestra la versión y cada apartado', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: AvisoPrivacidadPage(aviso: avisoPrivacidadVigente)),
     );
 
     expect(find.text(AppStrings.privacyTitle), findsOneWidget);
     expect(
-      find.textContaining('${AppStrings.privacyVersion} 1.0'),
+      find.textContaining(
+        '${AppStrings.privacyVersion} ${avisoPrivacidadVigente.version}',
+      ),
       findsOneWidget,
     );
     for (final seccion in avisoPrivacidadVigente.secciones) {

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/platform/abrir_pagina_publica.dart';
 import '../../domain/entities/flujo_login.dart';
 import '../../domain/usecases/consultar_estado_google_use_case.dart';
 import '../../domain/usecases/iniciar_google_use_case.dart';
@@ -17,10 +17,12 @@ final class LoginViewModel {
     required VerificarIntranetUseCase verificarIntranetUseCase,
     required IniciarGoogleUseCase iniciarGoogleUseCase,
     required ConsultarEstadoGoogleUseCase consultarEstadoGoogleUseCase,
+    Future<bool> Function(Uri) abrirAutorizacion = abrirPaginaPublica,
   }) : _obtenerCaptchaUseCase = obtenerCaptchaUseCase,
        _verificarIntranetUseCase = verificarIntranetUseCase,
        _iniciarGoogleUseCase = iniciarGoogleUseCase,
-       _consultarEstadoGoogleUseCase = consultarEstadoGoogleUseCase {
+       _consultarEstadoGoogleUseCase = consultarEstadoGoogleUseCase,
+       _abrirAutorizacion = abrirAutorizacion {
     _emitir(const LoginInitialState());
   }
 
@@ -28,16 +30,20 @@ final class LoginViewModel {
   final VerificarIntranetUseCase _verificarIntranetUseCase;
   final IniciarGoogleUseCase _iniciarGoogleUseCase;
   final ConsultarEstadoGoogleUseCase _consultarEstadoGoogleUseCase;
+  final Future<bool> Function(Uri) _abrirAutorizacion;
 
   final _stateController = StreamController<LoginState>.broadcast();
   LoginState _estadoActual = const LoginInitialState();
 
   bool _pollingActivo = false;
+  bool _descartado = false;
+  int _generacionPolling = 0;
 
   Stream<LoginState> get estado => _stateController.stream;
   LoginState get estadoActual => _estadoActual;
 
   void _emitir(LoginState nuevoEstado) {
+    if (_descartado) return;
     _estadoActual = nuevoEstado;
     if (!_stateController.isClosed) {
       _stateController.add(nuevoEstado);
@@ -158,6 +164,8 @@ final class LoginViewModel {
     required String transaccionId,
     required DateTime expiraEn,
   }) async {
+    _cancelarPolling();
+    final generacion = _generacionPolling;
     _emitir(
       LoginEsperandoGoogleState(
         transaccionId: transaccionId,
@@ -165,7 +173,11 @@ final class LoginViewModel {
       ),
     );
 
-    await abrirNavegadorGoogle(urlAutorizacion);
+    if (!await abrirNavegadorGoogle(urlAutorizacion) ||
+        _descartado ||
+        generacion != _generacionPolling) {
+      return;
+    }
     unawaited(
       _iniciarPollingSecuencial(
         transaccionId: transaccionId,
@@ -174,23 +186,28 @@ final class LoginViewModel {
     );
   }
 
-  /// Abre la URL en el navegador externo respetando las reglas de Chrome/Web y móvil.
-  Future<void> abrirNavegadorGoogle(Uri url) async {
+  /// En iOS, abre Safari dentro de la app. Solo acepta el proveedor esperado.
+  Future<bool> abrirNavegadorGoogle(Uri url) async {
+    var abierta = false;
     try {
-      await launchUrl(
-        url,
-        mode: kIsWeb
-            ? LaunchMode.platformDefault
-            : LaunchMode.externalApplication,
-        webOnlyWindowName: '_blank',
-      );
+      if (url.scheme == 'https' &&
+          url.host == 'accounts.google.com' &&
+          url.userInfo.isEmpty &&
+          url.port == 443) {
+        abierta = await _abrirAutorizacion(url);
+      }
     } catch (_) {
+      abierta = false;
+    }
+    if (!abierta) {
+      _cancelarPolling();
       _emitir(
         const LoginErrorState(
           mensaje: 'No se pudo abrir el navegador. Vuelve a intentarlo.',
         ),
       );
     }
+    return abierta;
   }
 
   /// Expone la espera del resultado de Google solo para las pruebas, sin
@@ -212,9 +229,11 @@ final class LoginViewModel {
     required DateTime expiraEn,
   }) async {
     _cancelarPolling();
+    if (_descartado) return;
+    final generacion = _generacionPolling;
     _pollingActivo = true;
 
-    while (_pollingActivo) {
+    while (_pollingActivo && generacion == _generacionPolling) {
       if (DateTime.now().isAfter(expiraEn)) {
         _pollingActivo = false;
         _emitir(
@@ -226,7 +245,7 @@ final class LoginViewModel {
       }
 
       await Future<void>.delayed(const Duration(seconds: 2));
-      if (!_pollingActivo) break;
+      if (!_pollingActivo || generacion != _generacionPolling) break;
 
       // Verificación de expiración tras la espera
       if (DateTime.now().isAfter(expiraEn)) {
@@ -241,6 +260,7 @@ final class LoginViewModel {
 
       try {
         final resultado = await _consultarEstadoGoogleUseCase(transaccionId);
+        if (!_pollingActivo || generacion != _generacionPolling) return;
 
         switch (resultado.estado) {
           case EstadoGoogle.pendiente:
@@ -262,7 +282,6 @@ final class LoginViewModel {
 
           case EstadoGoogle.error:
             _pollingActivo = false;
-            debugPrint('DETALLE ERROR GOOGLE: ${resultado.errorMensaje}');
             _emitir(
               LoginErrorState(
                 mensaje:
@@ -279,6 +298,7 @@ final class LoginViewModel {
         // El límite de tiempo (expiraEn) evita reintentar indefinidamente.
         continue;
       } on Failure catch (e) {
+        if (generacion != _generacionPolling) return;
         _pollingActivo = false;
         _emitir(LoginErrorState(mensaje: e.message));
         return;
@@ -290,9 +310,12 @@ final class LoginViewModel {
 
   void _cancelarPolling() {
     _pollingActivo = false;
+    _generacionPolling++;
   }
 
   void dispose() {
+    if (_descartado) return;
+    _descartado = true;
     _cancelarPolling();
     _stateController.close();
   }

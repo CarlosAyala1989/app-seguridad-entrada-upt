@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../domain/entities/ubicacion_dispositivo.dart';
@@ -29,10 +30,20 @@ final class UbicacionRepositoryImpl implements UbicacionRepository {
 
     try {
       final posicion = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 12),
-        ),
+        locationSettings:
+            !kIsWeb &&
+                (defaultTargetPlatform == TargetPlatform.iOS ||
+                    defaultTargetPlatform == TargetPlatform.macOS)
+            ? AppleSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: const Duration(seconds: 12),
+                allowBackgroundLocationUpdates: false,
+                pauseLocationUpdatesAutomatically: true,
+              )
+            : const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 12),
+              ),
       );
       return UbicacionDispositivo(
         latitud: posicion.latitude,

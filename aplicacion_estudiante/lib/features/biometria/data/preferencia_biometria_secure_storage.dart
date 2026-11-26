@@ -1,12 +1,14 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/auth/secure_storage_options.dart';
+
 import '../domain/repositories/preferencia_biometria_repository.dart';
 
 /// Guarda solo "activado: sí/no". Nunca se guarda ninguna huella ni rostro.
 final class PreferenciaBiometriaSecureStorage
     implements PreferenciaBiometriaRepository {
   const PreferenciaBiometriaSecureStorage({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
+    FlutterSecureStorage storage = almacenamientoSeguro,
   }) : _storage = storage;
 
   final FlutterSecureStorage _storage;
