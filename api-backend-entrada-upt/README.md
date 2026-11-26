@@ -176,3 +176,9 @@ docker build -t api-entrada-upt .
 
 La creación del administrador de Dokploy y el panel Flutter para puertas y
 guardias están documentados en [Administración y GPS](docs/administracion_guardias.md).
+
+## Privacidad y eliminación de cuenta
+
+El [contrato y conservación de 30 días](docs/eliminacion_cuenta_privacidad.md)
+y el [portal preparado para Dokploy](../portal-privacidad-upt/README.md) describen
+el nuevo flujo de eliminación de cuentas de estudiante.

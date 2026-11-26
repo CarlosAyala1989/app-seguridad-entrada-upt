@@ -3,13 +3,16 @@ import { grupoConexiones, verificarConexionBaseDatos } from './config/database.j
 import { entorno } from './config/env.js';
 import { ejecutarMigraciones } from './base_datos/migraciones.js';
 import { asegurarAdministradorInicial } from './base_datos/administrador_inicial.js';
+import { iniciarDepuracionPrivacidad } from './modulos/cuenta/retencion.js';
 
 let servidor;
+let detenerDepuracion;
 try {
   // La API comienza a escuchar solo tras completar la preparación y comprobación de la base de datos.
   await ejecutarMigraciones({ grupoConexiones });
   await asegurarAdministradorInicial(grupoConexiones);
   await verificarConexionBaseDatos();
+  detenerDepuracion = iniciarDepuracionPrivacidad();
   console.log('Conexión con la base de datos establecida');
   servidor = app.listen(entorno.port, '0.0.0.0', () => {
     console.log(`API disponible en http://localhost:${entorno.port}/api`);
@@ -21,6 +24,7 @@ try {
 }
 
 async function cerrarServidor(senal) {
+  detenerDepuracion?.();
   console.log(`\n${senal} recibido. Cerrando la API...`);
 
   // Se deja de aceptar nuevas conexiones HTTP antes de cerrar el grupo de conexiones de la base de datos.

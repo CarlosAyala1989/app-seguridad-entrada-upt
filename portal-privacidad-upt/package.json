@@ -1,0 +1,9 @@
+{
+  "name": "portal-privacidad-upt",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Privacidad, soporte y eliminación de cuenta de Identidad UPT Estudiante",
+  "scripts": { "start": "node src/server.js", "dev": "node --watch src/server.js", "test": "node --test", "check": "node --check src/server.js && node --check src/paginas.js && node --check src/config.js" },
+  "engines": { "node": ">=22" }
+}
