@@ -44,7 +44,9 @@ export function crearServidor({ config = cargarConfiguracion(), solicitar = fetc
     res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self' https://accounts.google.com; base-uri 'none'; frame-ancestors 'none'");
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Referrer-Policy', 'no-referrer');
+    // Conserva Origin en formularios propios sin enviar Referer a otros sitios.
+    // no-referrer provoca Origin: null en los POST de formularios HTML.
+    res.setHeader('Referrer-Policy', 'same-origin');
     // Evita que Cloudflare oculte el correo con un script bloqueado por la CSP.
     res.setHeader('Cache-Control', 'no-store, no-transform');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');

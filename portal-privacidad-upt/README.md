@@ -45,6 +45,13 @@ bloqueado por la política CSP. Después de desplegar, verificar que el correo y
 los enlaces `mailto:` se vean sin JavaScript.
 [Comportamiento documentado por Cloudflare](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/).
 
+`Referrer-Policy: same-origin` conserva el encabezado `Origin` de los
+formularios del portal y omite `Referer` al navegar a Google u otros sitios.
+No usar `no-referrer`: en los POST de formularios HTML puede producir
+`Origin: null`, que la protección CSRF rechaza. Se siguen rechazando orígenes
+ajenos, nulos o ausentes y solicitudes con `Sec-Fetch-Site: cross-site`.
+[Efecto de Referrer-Policy sobre Origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy#effect_on_the_origin_header).
+
 Se ejecuta como usuario `node`, sin volúmenes, y tiene healthcheck `GET /salud`.
 Sin las dos URL configuradas no arranca en producción para evitar enlaces
 incorrectos. [Configuración Dockerfile de Dokploy](https://docs.dokploy.com/docs/core/applications/build-type).

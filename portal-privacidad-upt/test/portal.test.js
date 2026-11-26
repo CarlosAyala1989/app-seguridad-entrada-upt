@@ -32,7 +32,7 @@ before(async () => {
   base = `http://127.0.0.1:${servidor.address().port}`;
 });
 after(async () => { servidor.closeAllConnections(); await new Promise((resolve) => servidor.close(resolve)); });
-const post = (ruta, cookie, cuerpo = '', origen = config.origen) => fetch(`${base}${ruta}`, { method: 'POST', redirect: 'manual', headers: { origin: origen, 'content-type': 'application/x-www-form-urlencoded', ...(cookie ? { cookie } : {}) }, body: cuerpo });
+const post = (ruta, cookie, cuerpo = '', origen = config.origen, cabeceras = {}) => fetch(`${base}${ruta}`, { method: 'POST', redirect: 'manual', headers: { ...(origen === null ? {} : { origin: origen }), 'content-type': 'application/x-www-form-urlencoded', ...(cookie ? { cookie } : {}), ...cabeceras }, body: cuerpo });
 
 describe('Portal público y confirmación de eliminación', () => {
   it('sirve las tres páginas sin autenticación y con el responsable y plazo acordados', async () => {
@@ -40,6 +40,8 @@ describe('Portal público y confirmación de eliminación', () => {
       const res = await fetch(`${base}${ruta}`);
       assert.equal(res.status, 200);
       assert.equal(res.headers.get('cache-control'), 'no-store, no-transform');
+      // no-referrer convierte Origin en null al enviar formularios HTML.
+      assert.equal(res.headers.get('referrer-policy'), 'same-origin');
       assert.ok(res.headers.get('content-security-policy').includes("form-action 'self'"));
       const html = await res.text();
       assert.ok(html.includes('Carlos Daniel Ayala Ramos'));
@@ -54,7 +56,10 @@ describe('Portal público y confirmación de eliminación', () => {
 
   it('rechaza peticiones de otro origen y no inicia una verificación al hacer GET', async () => {
     const total = llamadas.length;
-    assert.equal((await post('/acciones/eliminacion/iniciar', null, '', 'https://ajeno.test')).status, 403);
+    for (const origen of ['https://ajeno.test', 'https://portal.upt.test.ajeno.test', 'null', null]) {
+      assert.equal((await post('/acciones/eliminacion/iniciar', null, '', origen)).status, 403);
+    }
+    assert.equal((await post('/acciones/eliminacion/iniciar', null, '', config.origen, { 'sec-fetch-site': 'cross-site' })).status, 403);
     assert.equal((await fetch(`${base}/acciones/eliminacion/confirmar`)).status, 404);
     assert.equal(llamadas.length, total);
   });
